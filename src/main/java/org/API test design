@@ -68,7 +68,7 @@ Content-Type: application/json
 Authorization: Basic aGFubmE6aGFubmFQYXNzMSE=
 {
   "id": 3,
-  "balance": 5000.01
+  "balance": 5000
 }
 
 -----------------------------------TRANSFER-----------------------------------
