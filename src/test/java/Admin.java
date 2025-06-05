@@ -5,8 +5,6 @@ import static io.restassured.RestAssured.given;
 public class Admin {
 
     private String token;
-    private String name;
-    private String pass;
 
     private static Admin admin;
 
@@ -18,8 +16,6 @@ public class Admin {
     }
 
     private Admin (){
-        this.name = name;
-        this.pass = pass;
         this.token = given().
                 contentType(ContentType.JSON)
                 .accept(ContentType.JSON)

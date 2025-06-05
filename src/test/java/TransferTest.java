@@ -255,7 +255,7 @@ public class TransferTest {
 
 
     @Test
-    public void transferMoneyConcurrenltyWithSameAccounts() {
+    public void transferMoneyConcurrentlyWithSameAccounts() {
         //pre-conditions: create account and deposit amount of at least 500 000
         BankAccount senderBankAccount = user.createBankAccount();
         double senderDeposit = 5000;
