@@ -1,59 +1,55 @@
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
+import models.BankAccountModel;
+import models.DepositRequestModel;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import requests.DepositRequest;
+import specs.RequestSpecs;
+import specs.ResponseSpecs;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
 
 
-public class DepositTest {
+public class DepositTest extends BaseTest{
 
-    private static User user;
-    private static BankAccount bankAccount;
+    private static BankAccountModel bankAccount;
 
     @BeforeAll
-    public static void setup(){
-        RestAssured.filters(
-                List.of(new RequestLoggingFilter(),
-                        new ResponseLoggingFilter()));
-        user = Admin.getInstance().createUser("hanna", "hannaPass1!");
-        bankAccount = user.createBankAccount();
+    public static void prepareData(){
+        bankAccount = createBankAccount();
     }
 
     @ParameterizedTest
     @MethodSource("validDepositAmount")
     public void userCanDepositValidAmount (double validAmount){
+        BigDecimal depositAmount = BigDecimal.valueOf(validAmount).setScale(2, RoundingMode.HALF_UP);
         //get initial balance
-        BigDecimal initialBalanceAsDouble = user.getAccountBalance(bankAccount.getId());
-        BigDecimal expectedBalance = initialBalanceAsDouble
-                .add(BigDecimal.valueOf(validAmount)
-                        .setScale(2, RoundingMode.HALF_UP));
+        BigDecimal initialBalance = getBankAccount(bankAccount.getId()).getBalance();
+        BigDecimal expectedBalance = initialBalance.add(depositAmount);
 
         //send deposit request
-        double balanceAsDouble = BankRequests.depositRequest(user, bankAccount.getId(), validAmount)
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .extract()
-                .body().jsonPath().getDouble("balance");
+        BankAccountModel responseBody = new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass),
+                ResponseSpecs.returns200())
+                .post(new DepositRequestModel(bankAccount.getId(), depositAmount))
+                .extract().body().as(BankAccountModel.class);
 
-        BigDecimal balanceAsBigDecimal = BigDecimal.valueOf(balanceAsDouble).setScale(2, RoundingMode.HALF_UP);
-
-        Assertions.assertEquals(expectedBalance, balanceAsBigDecimal, "Balance in response body of deposit request");
+        softly.assertThat(responseBody.getBalance())
+                .withFailMessage("Balance in response body of deposit request. " +
+                        "Expected: %s; Actual: %s.", expectedBalance, responseBody.getBalance())
+                .isEqualTo(expectedBalance);
 
         //check balance update
-        BigDecimal updatedBalance = user.getAccountBalance(bankAccount.getId());
+        BigDecimal updatedBalance = getBankAccount(bankAccount.getId()).getBalance();
 
-        Assertions.assertEquals(expectedBalance, updatedBalance, "Balance after deposit: ");
+        softly.assertThat(updatedBalance)
+                .withFailMessage( "Balance was updated. "+
+                        "Expected: %s; Actual: %s.", expectedBalance, updatedBalance)
+                .isEqualTo(expectedBalance);
     }
 
     public static Stream<Arguments> validDepositAmount(){
@@ -68,17 +64,25 @@ public class DepositTest {
     @ParameterizedTest
     @MethodSource("invalidAmount")
     public void userCanNotDepositInvalidAmount(double invalidAmount){
+        BigDecimal depositAmount = BigDecimal.valueOf(invalidAmount).setScale(2, RoundingMode.HALF_UP);
         //get initial balance
-        BigDecimal initialBalance = user.getAccountBalance(bankAccount.getId());
+        BigDecimal initialBalance = getBankAccount(bankAccount.getId()).getBalance();
 
         //send deposit request
-        BankRequests.depositRequest(user, bankAccount.getId(), invalidAmount)
-                .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST);
+        new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass),
+                ResponseSpecs.returns400())
+                .post(DepositRequestModel
+                        .builder()
+                        .id(bankAccount.getId())
+                        .balance(depositAmount)
+                        .build());
 
         //check balance after request with invalid amount
-        BigDecimal balanceAfterBadRequest = user.getAccountBalance(bankAccount.getId());
+        BigDecimal balanceAfterBadRequest = getBankAccount(bankAccount.getId()).getBalance();
 
-        Assertions.assertEquals(initialBalance, balanceAfterBadRequest, "Balance after bad request: ");
+        softly.assertThat(balanceAfterBadRequest)
+                .withFailMessage( "Balance after bad request: " + balanceAfterBadRequest)
+                .isEqualTo(initialBalance);
     }
 
     public static Stream<Arguments> invalidAmount(){
@@ -92,22 +96,32 @@ public class DepositTest {
 
     @Test
     public void userCanNotDepositToNonExistingAccount(){
-        BankRequests.depositRequest(user, 5000, 999999)
-                .assertThat()
-                .statusCode(HttpStatus.SC_FORBIDDEN);
+        new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass),
+                ResponseSpecs.returns403())
+                .post(DepositRequestModel
+                        .builder()
+                        .id(999999)
+                        .balance(BigDecimal.valueOf(5000))
+                        .build());
     }
 
     @Test
     public void depositToAccountConcurrently(){
         //check initial account balance
-        BigDecimal initialBalance = user.getAccountBalance(bankAccount.getId());
+        BigDecimal initialBalance = getBankAccount(bankAccount.getId()).getBalance();
 
         //send 50 requests to deposit amount of 5 000
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         Future<?> depositTask = executorService.submit(() -> {
             for (int i = 1; i <= 50; i++){
-                BankRequests.depositRequest(user, bankAccount.getId(), 5000);
+                new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass),
+                        ResponseSpecs.returns200())
+                        .post(DepositRequestModel
+                                .builder()
+                                .id(bankAccount.getId())
+                                .balance(BigDecimal.valueOf(5000))
+                                .build());
             }
         });
 
@@ -127,13 +141,12 @@ public class DepositTest {
             executorService.shutdownNow();
         }
 
-        Assertions.assertEquals(initialBalance.add(BigDecimal.valueOf(250000)),
-                user.getAccountBalance(bankAccount.getId()),
-                "Balance was updated incorrectly");
+        //balance after requests
+        BigDecimal balanceAfterRequests = getBankAccount(bankAccount.getId()).getBalance();
+
+        softly.assertThat(balanceAfterRequests)
+                .withFailMessage( "Balance was updated incorrectly: " + balanceAfterRequests)
+                .isEqualTo(initialBalance.add(BigDecimal.valueOf(250000)));
     }
 
-    @AfterAll
-    public static void deleteUser(){
-        Admin.getInstance().deleteUser(user);
-    }
 }

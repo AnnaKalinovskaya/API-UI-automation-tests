@@ -1,119 +1,139 @@
-import io.restassured.RestAssured;
-import io.restassured.filter.log.RequestLoggingFilter;
-import io.restassured.filter.log.ResponseLoggingFilter;
-import io.restassured.http.ContentType;
-import org.apache.http.HttpStatus;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
+import generators.RandomDataGenerator;
+import models.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import requests.DepositRequest;
+import requests.TransferRequest;
+import specs.RequestSpecs;
+import specs.ResponseSpecs;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
 
-public class TransferTest {
-
-    private static User user;
-
-    @BeforeAll
-    public static void setup(){
-        RestAssured.filters(
-                List.of(new RequestLoggingFilter(),
-                        new ResponseLoggingFilter()));
-
-        user = Admin.getInstance().createUser("hanna", "hannaPass1!");
-    }
+public class TransferTest extends BaseTest{
 
     @ParameterizedTest
     @MethodSource("validTransferAmount")
     public void userCanTransferValidAmount(double validValue){
+        BigDecimal amountToTransfer = BigDecimal.valueOf(validValue).setScale(2, RoundingMode.HALF_UP);
         //pre-conditions: create account with initial balance on sender account
-        BankAccount senderBankAccount = user.createBankAccount();
-        BankAccount receiverBankAccount = user.createBankAccount();
+        BankAccountModel senderBankAccount = createBankAccount();
+        BankAccountModel receiverBankAccount = createBankAccount();
+
         for (int i = 0; i < 3; i ++) {
-            BankRequests.depositRequest(user, senderBankAccount.getId(), 5000);
+            new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns200())
+                    .post(DepositRequestModel
+                                    .builder()
+                                    .id(senderBankAccount.getId())
+                                    .balance(BigDecimal.valueOf(5000))
+                                    .build());
         }
 
         //get initial values on both accounts
-        BigDecimal initialReceiverBalance = user.getAccountBalance(receiverBankAccount.getId());
-        BigDecimal initialSenderBalance = user.getAccountBalance(senderBankAccount.getId());
+        BigDecimal initialSenderBalance = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal initialReceiverBalance = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
-        BigDecimal expectedFinalSenderBalance = initialSenderBalance
-                .subtract(BigDecimal.valueOf(validValue)
-                        .setScale(2, RoundingMode.HALF_UP));
-
-        BigDecimal expectedFinalReceiverBalance = initialReceiverBalance
-                .add(BigDecimal.valueOf(validValue)
-                        .setScale(2, RoundingMode.HALF_UP));
+        BigDecimal expectedFinalSenderBalance = initialSenderBalance.subtract(amountToTransfer);
+        BigDecimal expectedFinalReceiverBalance = initialReceiverBalance.add(amountToTransfer);
 
         //send request to transfer valid amount
-        var responseBody = BankRequests.transferRequest(user, senderBankAccount.getId(), receiverBankAccount.getId(), validValue)
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .extract().body();
+        TransferResponseModel responseBody = new TransferRequest(
+                RequestSpecs.authAsUserSpec(userName, userPass),
+                ResponseSpecs.returns200())
+                .post(TransferRequestModel
+                        .builder()
+                        .amount(amountToTransfer)
+                        .senderAccountId(senderBankAccount.getId())
+                        .receiverAccountId(receiverBankAccount.getId())
+                        .build())
+                .extract().body().as(TransferResponseModel.class);
 
-        Assertions.assertEquals(senderBankAccount.getId(), responseBody.jsonPath().getInt("senderAccountId"),
-                "Sender account id:");
-        Assertions.assertEquals(receiverBankAccount.getId(), responseBody.jsonPath().getInt("receiverAccountId"),
-                "Receiver account id:");
-        Assertions.assertEquals(BigDecimal.valueOf(validValue), BigDecimal.valueOf(responseBody.jsonPath().getDouble("amount")),
-                "Transfer amount:");
-        Assertions.assertEquals("Transfer successful", responseBody.jsonPath().getString("message"),
-                "Response message for transfer request:");
+        softly.assertThat(responseBody.getSenderAccountId())
+                .withFailMessage("Sender account id: " + responseBody.getSenderAccountId())
+                .isEqualTo(senderBankAccount.getId());
+        softly.assertThat(responseBody.getReceiverAccountId())
+                .withFailMessage("Receiver account id: " + responseBody.getReceiverAccountId())
+                .isEqualTo(receiverBankAccount.getId());
+        softly.assertThat(responseBody.getAmount())
+                .withFailMessage("Transfer amount: " + responseBody.getAmount())
+                .isEqualTo(amountToTransfer);
+        softly.assertThat(responseBody.getMessage())
+                .withFailMessage("Response message for transfer request: " + responseBody.getMessage())
+                .isEqualTo("Transfer successful");
 
         //check balance state after transfer of sender and receiver
-        BigDecimal updatedReceiverBalance = user.getAccountBalance(receiverBankAccount.getId());
-        BigDecimal updatedSenderBalance = user.getAccountBalance(senderBankAccount.getId());
+        BigDecimal updatedSenderBalance = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal updatedReceiverBalance = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
-        Assertions.assertEquals(expectedFinalSenderBalance, updatedSenderBalance,
-                "Sender balance updated:");
-        Assertions.assertEquals(expectedFinalReceiverBalance, updatedReceiverBalance,
-                "Receiver balance updated:");
+        softly.assertThat(updatedSenderBalance)
+                .withFailMessage("Sender balance updated: " + updatedSenderBalance)
+                .isEqualTo(expectedFinalSenderBalance);
+        softly.assertThat(updatedReceiverBalance)
+                .withFailMessage("Receiver balance updated: " + updatedReceiverBalance)
+                .isEqualTo(expectedFinalReceiverBalance);
     }
 
     public static Stream<Arguments> validTransferAmount(){
         return Stream.of(
                 Arguments.of(0.01),
                 Arguments.of(9999.99),
-                Arguments.of(10000.00)
+                Arguments.of(10000.00),
+                Arguments.of(Double.MIN_VALUE)
         );
     }
 
     @ParameterizedTest
     @MethodSource("invalidTransferAmount")
     public void userCanNotTransferInvalidAmount(double invalidValue){
+        BigDecimal amountToTransfer = BigDecimal.valueOf(invalidValue).setScale(2, RoundingMode.HALF_UP);
         //pre-conditions: create account with initial balance on sender account
-        BankAccount senderBankAccount = user.createBankAccount();
-        BankAccount receiverBankAccount = user.createBankAccount();
+        BankAccountModel senderBankAccount = createBankAccount();
+        BankAccountModel receiverBankAccount = createBankAccount();
+
         for (int i = 0; i < 3; i ++) {
-            BankRequests.depositRequest(user, senderBankAccount.getId(), 5000);
+            new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns200())
+                    .post(DepositRequestModel
+                            .builder()
+                            .id(senderBankAccount.getId())
+                            .balance(BigDecimal.valueOf(5000))
+                            .build());
         }
 
         //get initial values in both accounts
-        BigDecimal initReceiverBalance = user.getAccountBalance(receiverBankAccount.getId());
-        BigDecimal initSenderBalance = user.getAccountBalance(senderBankAccount.getId());
+        BigDecimal initialSenderBalance = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal initialReceiverBalance = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
         //send request to transfer invalid amount
-        BankRequests.transferRequest(user, senderBankAccount.getId(), receiverBankAccount.getId(), invalidValue);
-        BankRequests.transferRequest(user, senderBankAccount.getId(), receiverBankAccount.getId(), invalidValue)
-                .assertThat()
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
+        new TransferRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns400())
+                .post(TransferRequestModel
+                        .builder()
+                        .amount(amountToTransfer)
+                        .senderAccountId(senderBankAccount.getId())
+                        .receiverAccountId(receiverBankAccount.getId())
+                        .build());
 
         //check balance state after invalid transfer
-        BigDecimal receiverBalanceAfterTransfer = user.getAccountBalance(receiverBankAccount.getId());
-        BigDecimal senderBalanceAfterTransfer = user.getAccountBalance(senderBankAccount.getId());
+        BigDecimal senderBalanceAfterTransfer = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal receiverBalanceAfterTransfer = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
-        Assertions.assertEquals(initSenderBalance, senderBalanceAfterTransfer,
-                "Sender balance updated after invalid transfer:");
-        Assertions.assertEquals(initReceiverBalance, receiverBalanceAfterTransfer,
-                "Receiver balance updated after invalid transfer:");
+        softly.assertThat(senderBalanceAfterTransfer)
+                .withFailMessage("Sender balance after invalid transfer. " + senderBalanceAfterTransfer)
+                .isEqualTo(initialSenderBalance);
+        softly.assertThat(receiverBalanceAfterTransfer)
+                .withFailMessage("Receiver balance after invalid transfer: " + receiverBalanceAfterTransfer)
+                .isEqualTo(initialReceiverBalance);
     }
 
     public static Stream<Arguments> invalidTransferAmount(){
@@ -127,143 +147,204 @@ public class TransferTest {
 
     @Test
     public void userCanTransferAllMoneyFromAccount(){
-        //pre-conditions: create new bank account and deposit initial value for transfer (max allowed)
-        BankAccount senderBankAccount = user.createBankAccount();
-        BankRequests.depositRequest(user, senderBankAccount.getId(), 5000);
-        //pre-conditions: create account with initial balance on sender account
-        BankAccount receiverBankAccount = user.createBankAccount();
+        BigDecimal amount = BigDecimal.valueOf(4000).setScale(2, RoundingMode.HALF_UP);
+        //pre-conditions: create new bank account and deposit initial value
+        BankAccountModel senderBankAccount = createBankAccount();
+        BankAccountModel receiverBankAccount =createBankAccount();
 
-        //check balance before transfer on receiver account
-        BigDecimal receiverBalanceBeforeTransfer = user.getAccountBalance(receiverBankAccount.getId());
+        new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns200())
+                .post(DepositRequestModel
+                        .builder()
+                        .id(senderBankAccount.getId())
+                        .balance(amount)
+                        .build());
+
+        //check balance before transfer accounts
+        BigDecimal initialSenderBalance = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal initialReceiverBalance = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
         //send request to transfer all money
-        var responseBody = BankRequests.transferRequest(user, senderBankAccount.getId(), receiverBankAccount.getId(), 5000)
-                .assertThat()
-                .statusCode(HttpStatus.SC_OK)
-                .extract().body();
+        TransferResponseModel responseBody = new TransferRequest(
+                RequestSpecs.authAsUserSpec(userName, userPass),
+                ResponseSpecs.returns200())
+                .post(TransferRequestModel
+                        .builder()
+                        .amount(amount)
+                        .senderAccountId(senderBankAccount.getId())
+                        .receiverAccountId(receiverBankAccount.getId())
+                        .build())
+                .extract().body().as(TransferResponseModel.class);
 
         //assert all response fields
-        Assertions.assertEquals(senderBankAccount.getId(),
-                responseBody.jsonPath().getInt("senderAccountId"),
-                "Sender account id:");
-        Assertions.assertEquals(receiverBankAccount.getId(),
-                responseBody.jsonPath().getInt("receiverAccountId"),
-                "Receiver account id:");
-        Assertions.assertEquals(BigDecimal.valueOf(5000.00).setScale(2, RoundingMode.HALF_UP),
-                BigDecimal.valueOf(responseBody.jsonPath().getDouble("amount"))
-                .setScale(2, RoundingMode.HALF_UP),
-                "Transfer amount:");
-        Assertions.assertEquals("Transfer successful",
-                responseBody.jsonPath().getString("message"),
-                "Response message for transfer request:");
+        softly.assertThat(responseBody.getSenderAccountId())
+                .withFailMessage("Sender account id. " +
+                        "Expected: %s; Actual: %s.", senderBankAccount.getId(), responseBody.getSenderAccountId())
+                .isEqualTo(senderBankAccount.getId());
+        softly.assertThat(responseBody.getReceiverAccountId())
+                .withFailMessage("Receiver account id. " +
+                        "Expected: %s; Actual: %s.", receiverBankAccount.getId(), responseBody.getReceiverAccountId())
+                .isEqualTo(receiverBankAccount.getId());
+        softly.assertThat(responseBody.getAmount())
+                .withFailMessage("Transfer amount. " +
+                        "Expected: %s; Actual: %s.", amount, responseBody.getAmount())
+                .isEqualTo(amount);
+        softly.assertThat(responseBody.getMessage())
+                .withFailMessage("Actual response message for transfer request: " +
+                        responseBody.getMessage())
+                .isEqualTo("Transfer successful");
 
         //check balance state after transfer on both accounts
-        Assertions.assertEquals(receiverBalanceBeforeTransfer.add(BigDecimal.valueOf(5000.00)),
-                user.getAccountBalance(receiverBankAccount.getId()),
-                "Receiver balance after transfer update:");
-        Assertions.assertEquals(BigDecimal.valueOf(0.00)
-                        .setScale(2, RoundingMode.HALF_UP),
-                user.getAccountBalance(senderBankAccount.getId()),
-                "Receiver balance after transfer update:");
+        BigDecimal senderBalanceAfterTransfer = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal receiverBalanceAfterTransfer = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
+
+        softly.assertThat(receiverBalanceAfterTransfer)
+                .withFailMessage("Receiver balance after transfer update: " + receiverBalanceAfterTransfer)
+                .isEqualTo(initialReceiverBalance.add(amount));
+        softly.assertThat(senderBalanceAfterTransfer)
+                .withFailMessage("Sender balance after transfer update: " +  senderBalanceAfterTransfer)
+                .isEqualTo(initialSenderBalance.subtract(amount));
     }
 
     @Test
     public void userCanNotTransferMoreMoneyThanCurrentBalance(){
         //pre-conditions: create account with initial balance on sender account
-        double random = new Random().nextDouble((5000.00 - 0.01) + 1) + 0.01;
-        double randomSenderBalance = Math.round(random * 100.0) / 100.0;
-        BankAccount senderBankAccount = user.createBankAccount();
-        BankRequests.depositRequest(user, senderBankAccount.getId(), randomSenderBalance);
+        BankAccountModel senderBankAccount = createBankAccount();
+        BigDecimal randomDepositAmount = RandomDataGenerator.getRandomDepositAmount();
+        new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns200())
+                .post(DepositRequestModel
+                        .builder()
+                        .id(senderBankAccount.getId())
+                        .balance(randomDepositAmount)
+                        .build());
 
-        BankAccount receiverBankAccount = user.createBankAccount();
-        BigDecimal receiverBalanceBeforeRequest = user.getAccountBalance(receiverBankAccount.getId());
+        BankAccountModel receiverBankAccount = createBankAccount();
+        BigDecimal initialReceiverBalance = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
         //send transfer request with random valid amount > than balance
-        double randomTransferAmount = new Random()
-                .nextDouble((10000.00 - (randomSenderBalance + 0.01)) + 1)
-                + (randomSenderBalance + 0.01);
-        BankRequests.transferRequest(user, senderBankAccount.getId(), receiverBankAccount.getId(), randomTransferAmount)
-                .assertThat()
-                .contentType(ContentType.JSON)
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
+        BigDecimal randomTransferAmount = RandomDataGenerator
+                .getRandomAmount(randomDepositAmount.doubleValue() + 0.01, 10000);
+        new TransferRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns400())
+                .post(TransferRequestModel
+                        .builder()
+                        .amount(randomTransferAmount)
+                        .senderAccountId(senderBankAccount.getId())
+                        .receiverAccountId(receiverBankAccount.getId())
+                        .build());
 
         //assert that balance of sender and receiver hasn't changed
-        Assertions.assertEquals(BigDecimal.valueOf(randomSenderBalance)
-                        .setScale(2, RoundingMode.HALF_UP),
-                user.getAccountBalance(senderBankAccount.getId()),
-                "Sender balance has changed after request: ");
-        Assertions.assertEquals(receiverBalanceBeforeRequest,
-                user.getAccountBalance(receiverBankAccount.getId()),
-                "Receiver balance has changed after request");
+        BigDecimal senderBalanceAfterTransfer = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal receiverBalanceAfterTransfer = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
+
+        softly.assertThat(receiverBalanceAfterTransfer)
+                .withFailMessage( "Sender balance has changed after request: " + receiverBalanceAfterTransfer)
+                .isEqualTo(initialReceiverBalance);
+        softly.assertThat(senderBalanceAfterTransfer)
+                .withFailMessage( "Sender balance has changed after request: " + senderBalanceAfterTransfer)
+                .isEqualTo(randomDepositAmount);
     }
 
     @Test
     public void userCanNotTransferMoneyFromNonExistingAccount(){
-        double randomValidTransferAmount = new Random()
-                .nextDouble((10000.00 - 0.01) + 1) + 0.01;
+        BigDecimal randomValidTransferAmount = RandomDataGenerator.getRandomDepositAmount();
 
-        BankAccount receiverBankAccount = user.createBankAccount();
-        BigDecimal receiverBalanceBeforeRequest = user.getAccountBalance(receiverBankAccount.getId());
+        BankAccountModel receiverBankAccount = createBankAccount();
+        BigDecimal receiverBalanceBeforeRequest = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
-        BankRequests.transferRequest(user, 99999, receiverBankAccount.getId(), randomValidTransferAmount)
-                .assertThat()
-                .contentType(ContentType.JSON)
-                .statusCode(HttpStatus.SC_FORBIDDEN);
+        new TransferRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns403())
+                .post(TransferRequestModel
+                        .builder()
+                        .amount(randomValidTransferAmount)
+                        .senderAccountId(99999)
+                        .receiverAccountId(receiverBankAccount.getId())
+                        .build());
 
-        Assertions.assertEquals(receiverBalanceBeforeRequest, user.getAccountBalance(receiverBankAccount.getId()),
-                "Receiver balance changed after request:");
+        BigDecimal receiverBalanceAfterRequest = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
+
+        softly.assertThat(receiverBalanceAfterRequest)
+                .withFailMessage( "Receiver balance changed after request: " + receiverBalanceAfterRequest)
+                .isEqualTo(receiverBalanceBeforeRequest);
     }
 
     @Test
     public void userCanNotTransferMoneyToNonExistingAccount(){
-        //pre-conditions: create account with balance required for test
-        BankAccount senderBankAccount = user.createBankAccount();
-        double randomValidAmount = new Random()
-                .nextDouble((5000.00 - 0.01) + 1) + 0.01;
-        BankRequests.depositRequest(user, senderBankAccount.getId(), randomValidAmount);
+        BigDecimal randomValidTransferAmount = RandomDataGenerator.getRandomDepositAmount();
 
-        BigDecimal senderBalanceBeforeRequest = user.getAccountBalance(senderBankAccount.getId());
+        BankAccountModel senderBankAccount = createBankAccount();
+        BigDecimal senderBalanceBeforeRequest = getBankAccount(senderBankAccount.getId())
+                .getBalance();
 
-        BankRequests.transferRequest(user, senderBankAccount.getId(), 99999, randomValidAmount)
-                .assertThat()
-                .contentType(ContentType.JSON)
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
+        new TransferRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns400())
+                .post(TransferRequestModel
+                        .builder()
+                        .amount(randomValidTransferAmount)
+                        .senderAccountId(senderBankAccount.getId())
+                        .receiverAccountId(99999)
+                        .build());
 
-        Assertions.assertEquals(senderBalanceBeforeRequest,
-                user.getAccountBalance(senderBankAccount.getId()),
-                "Sender balance changed after request:");
+        BigDecimal senderBalanceAfterRequest = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+
+        softly.assertThat(senderBalanceAfterRequest)
+                .withFailMessage( "Sender balance changed after request: " + senderBalanceAfterRequest)
+                .isEqualTo(senderBalanceBeforeRequest);
     }
 
     @Test
     public void senderAndReceiverAccountCannotBeTheSame() {
         //pre-conditions: create account with balance required for test
-        BankAccount senderBankAccount = user.createBankAccount();
-        double randomValidAmount = new Random()
-                .nextDouble((5000.00 - 0.01) + 1) + 0.01;
-        BankRequests.depositRequest(user, senderBankAccount.getId(), randomValidAmount);
+        BankAccountModel senderBankAccount = createBankAccount();
+        BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
+        new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns200())
+                .post(DepositRequestModel
+                .builder()
+                .id(senderBankAccount.getId())
+                .balance(randomAmount)
+                .build());
 
-        BigDecimal senderBalanceBeforeRequest = user.getAccountBalance(senderBankAccount.getId());
+        BigDecimal senderBalanceBeforeRequest = getBankAccount(senderBankAccount.getId())
+                .getBalance();
 
-        BankRequests.transferRequest(user, senderBankAccount.getId(), senderBankAccount.getId(), randomValidAmount)
-                .assertThat()
-                .contentType(ContentType.JSON)
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
+        new TransferRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns400())
+                .post(TransferRequestModel
+                        .builder()
+                        .amount(randomAmount)
+                        .senderAccountId(senderBankAccount.getId())
+                        .receiverAccountId(senderBankAccount.getId())
+                        .build());
 
-        Assertions.assertEquals(senderBalanceBeforeRequest, user.getAccountBalance(senderBankAccount.getId()),
-                "Sender balance changed after request:");
+        BigDecimal senderBalanceAfterRequest = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+
+        softly.assertThat(senderBalanceAfterRequest)
+                .withFailMessage("Sender balance changed after request: " + senderBalanceAfterRequest)
+                .isEqualTo(senderBalanceBeforeRequest);
     }
 
 
     @Test
     public void transferMoneyConcurrentlyWithSameAccounts() {
         //pre-conditions: create account and deposit amount of at least 500 000
-        BankAccount senderBankAccount = user.createBankAccount();
-        double senderDeposit = 5000;
+        BankAccountModel senderBankAccount = createBankAccount();
+        BigDecimal depositAmount = BigDecimal.valueOf(5000);
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         Future<?> depositTask = executorService.submit(() -> {
                         for (int i = 1; i <= 100; i++) {
-                            BankRequests.depositRequest(user, senderBankAccount.getId(), senderDeposit);
+                            new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns200())
+                                    .post(DepositRequestModel
+                                            .builder()
+                                            .id(senderBankAccount.getId())
+                                            .balance(depositAmount)
+                                            .build());
                         }
             });
 
@@ -274,14 +355,25 @@ public class TransferTest {
             System.out.println(e.getMessage());
         }
 
-        BankAccount receiverBankAccount = user.createBankAccount();
-        BigDecimal senderBalanceBEFORETransfer = user.getAccountBalance(senderBankAccount.getId());
-        BigDecimal receiverBalanceBEFORETransfer = user.getAccountBalance(receiverBankAccount.getId());
+        BankAccountModel receiverBankAccount = createBankAccount();
+
+        //check balance before requests
+        BigDecimal senderBalanceBEFORETransfer = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal receiverBalanceBEFORETransfer = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
         //send 50 transfer requests
+        BigDecimal transferAmount = BigDecimal.valueOf(10000);
         Future<?> transferTask = executorService.submit(() -> {
             for (int i = 1; i <= 50; i++){
-                BankRequests.transferRequest(user, senderBankAccount.getId(), receiverBankAccount.getId(), 10000);
+                new TransferRequest(RequestSpecs.authAsUserSpec(userName, userPass), ResponseSpecs.returns200())
+                        .post(TransferRequestModel
+                                .builder()
+                                .amount(transferAmount)
+                                .senderAccountId(senderBankAccount.getId())
+                                .receiverAccountId(receiverBankAccount.getId())
+                                .build());
             }
         });
 
@@ -291,8 +383,7 @@ public class TransferTest {
         } catch (ExecutionException | InterruptedException e) {
             System.out.println(e.getMessage());
         }
-
-
+        
         executorService.shutdown();
         try {
             if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
@@ -302,20 +393,19 @@ public class TransferTest {
             executorService.shutdownNow();
         }
 
-        BigDecimal totalTransferAmount = BigDecimal.valueOf(10000 * 50);
+        BigDecimal totalTransferAmount = transferAmount.multiply(BigDecimal.valueOf(50));
 
         //assert that sender and receiver balances were updated accordingly
-        BigDecimal senderBalanceAFTERTransfer = user.getAccountBalance(senderBankAccount.getId());
-        BigDecimal receiverBalanceAFTERTransfer = user.getAccountBalance(receiverBankAccount.getId());
+        BigDecimal senderBalanceAFTERTransfer = getBankAccount(senderBankAccount.getId())
+                .getBalance();
+        BigDecimal receiverBalanceAFTERTransfer = getBankAccount(receiverBankAccount.getId())
+                .getBalance();
 
-        Assertions.assertEquals(senderBalanceBEFORETransfer.subtract(totalTransferAmount), senderBalanceAFTERTransfer,
-                "Sender balance was updated incorrectly:");
-        Assertions.assertEquals(receiverBalanceBEFORETransfer.add(totalTransferAmount), receiverBalanceAFTERTransfer,
-                "Receiver balance was updated incorrectly:");
-    }
-
-    @AfterAll
-    public static void deleteUser(){
-        Admin.getInstance().deleteUser(user);
+        softly.assertThat(senderBalanceAFTERTransfer)
+                .withFailMessage("Sender balance was updated incorrectly: " + senderBalanceAFTERTransfer)
+                .isEqualTo(senderBalanceBEFORETransfer.subtract(totalTransferAmount));
+        softly.assertThat(receiverBalanceAFTERTransfer)
+                .withFailMessage("Receiver balance was updated incorrectly: " + receiverBalanceAFTERTransfer)
+                .isEqualTo(receiverBalanceBEFORETransfer.add(totalTransferAmount));
     }
 }
