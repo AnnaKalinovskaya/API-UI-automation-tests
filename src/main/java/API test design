@@ -8,7 +8,8 @@ Content-Type: application/json
   "password": "hannaPass1!"
 }
 
-### Positive test: User can deposit money to his bank account (valid boundary values: 0.01; 4999.99; 5000)
+### Positive test: User can deposit money to his bank account
+(valid boundary values: 0.01; 4999.99; 5000; Double.MIN_VALUE)
 POST http://localhost:4111/api/v1/accounts/deposit
 Content-Type: application/json
 Authorization: Basic aGFubmE6aGFubmFQYXNzMSE=
@@ -18,7 +19,7 @@ Authorization: Basic aGFubmE6aGFubmFQYXNzMSE=
 }
 
 ### Negative test: User cannot deposit INVALID amount to his bank account
-(boundary values: -0.99; 0; 5000.01; Double.MAX_VALUE; Double.MIN_VALUE)
+(boundary values: -0.99; 0; 5000.01; Double.MAX_VALUE)
 POST http://localhost:4111/api/v1/accounts/deposit
 Content-Type: application/json
 Authorization: Basic aGFubmE6aGFubmFQYXNzMSE=
@@ -48,7 +49,8 @@ Authorization: Basic aGFubmE6aGFubmFQYXNzMSE=
 
 -----------------------------------TRANSFER-----------------------------------
 
-### Positive test: User can transfer money (boundary values: 0.01; 9 999.99; 10 000)
+### Positive test: User can transfer money
+(boundary values: 0.01; 9 999.99; 10 000; Double.MIN_VALUE)
 POST http://localhost:4111/api/v1/accounts/transfer
 Content-Type: application/json
 Authorization: Basic aGFubmE6aGFubmFQYXNzMSE=
@@ -59,7 +61,7 @@ Authorization: Basic aGFubmE6aGFubmFQYXNzMSE=
 }
 
 ### Negative test: User cannot transfer INVALID amount
-(boundary values: -0.01; 0; 10 000.01, Double.MAX_VALUE; Double.MIN_VALUE)
+(boundary values: -0.01; 0; 10 000.01, Double.MAX_VALUE)
 POST http://localhost:4111/api/v1/accounts/transfer
 Content-Type: application/json
 Authorization: Basic aGFubmE6aGFubmFQYXNzMSE=
