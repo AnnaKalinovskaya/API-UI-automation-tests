@@ -2,17 +2,14 @@ import generators.RandomDataGenerator;
 import models.CustomerNameRequestModel;
 import models.CustomerNameResponseModel;
 import models.UserProfileModel;
-
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import requests.GetCustomerProfileRequest;
-import requests.UpdateCustomerNameRequest;
+import skelethon.requests.CrudRequester;
+import skelethon.requests.Endpoint;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
-
-
 import java.util.stream.Stream;
 
 public class UpdateNameTest extends BaseTest{
@@ -21,12 +18,10 @@ public class UpdateNameTest extends BaseTest{
     @ParameterizedTest
     @MethodSource("validNameValue")
     public void userCanUpdateNameWithValidValue(String validName){
-        CustomerNameResponseModel responseBody = new UpdateCustomerNameRequest(
-                RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns200())
-                .put(new CustomerNameRequestModel(validName))
-                .extract()
-                .body().as(CustomerNameResponseModel.class);
+        CustomerNameResponseModel responseBody = new CrudRequester<CustomerNameResponseModel>(
+                RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.returns200()).put(new CustomerNameRequestModel(validName));
 
         softly.assertThat(responseBody.getMessage())
                 .isEqualTo("Profile updated successfully");
@@ -53,18 +48,15 @@ public class UpdateNameTest extends BaseTest{
     public void userCanUpdateNameWithAlreadySetName(){
         //set Customer name as pre-condition
         String customerName = "Customer name";
-        new UpdateCustomerNameRequest(
-                RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns200())
-                .put(new CustomerNameRequestModel(customerName));
+        new CrudRequester<CustomerNameResponseModel>(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.returns200()).put(new CustomerNameRequestModel(customerName));
 
         //update name with the value which is already set
-        CustomerNameResponseModel responseBody = new UpdateCustomerNameRequest(
-                RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns200())
-                .put(new CustomerNameRequestModel(customerName))
-                .extract()
-                .body().as(CustomerNameResponseModel.class);
+        CustomerNameResponseModel responseBody = new CrudRequester<CustomerNameResponseModel>(
+                RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.returns200()).put(new CustomerNameRequestModel(customerName));
 
         softly.assertThat(responseBody.getMessage())
                 .isEqualTo("Profile updated successfully");
@@ -84,14 +76,16 @@ public class UpdateNameTest extends BaseTest{
     public void userCanNotUpdateNameWithInvalidValue(String inValidName){
         String initialName = userProfile.getName();
 
-        new UpdateCustomerNameRequest(RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns400())
-                .put(new CustomerNameRequestModel(inValidName));
+        new CrudRequester<CustomerNameResponseModel>(
+                RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                Endpoint.CUSTOMER_PROFILE,
+                ResponseSpecs.returns400()).put(new CustomerNameRequestModel(inValidName));
 
-        String nameAfterUpdateRequest = new GetCustomerProfileRequest(RequestSpecs.authAsUserSpec(userName, userPass),
+        String nameAfterUpdateRequest = new CrudRequester<UserProfileModel>(
+                RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                Endpoint.CUSTOMER_PROFILE,
                 ResponseSpecs.returns200())
-                .get()
-                .extract().body().as(UserProfileModel.class).getName();
+                .get().getName();
 
         softly.assertThat(nameAfterUpdateRequest)
                 .withFailMessage("Name got changed after invalid update name request:")

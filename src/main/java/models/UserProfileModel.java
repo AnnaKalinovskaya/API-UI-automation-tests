@@ -13,7 +13,7 @@ import java.util.List;
 @Builder
 public class UserProfileModel extends BaseModel{
 
-    private Integer id;
+    private Long id;
     private String username;
     private String password;
     private String name;

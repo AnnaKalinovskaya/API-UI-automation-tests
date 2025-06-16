@@ -6,8 +6,10 @@ import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import models.LoginRequestModel;
-import requests.LoginRequest;
+import skelethon.requests.Endpoint;
+import skelethon.requests.ValidatableCrudRequester;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class RequestSpecs {
@@ -15,7 +17,7 @@ public class RequestSpecs {
     private static String baseURI = "http://localhost:4111/api/v1";
     private static String adminName = "admin";
     private static String adminPass = "admin";
-    private static String adminToken;
+    private static HashMap<String, String> authTokens = new HashMap<>();
 
     private RequestSpecs(){}
 
@@ -33,26 +35,34 @@ public class RequestSpecs {
     }
 
     public static RequestSpecification adminSpec(){
-        if (adminToken == null) {
-            adminToken = new LoginRequest(RequestSpecs.unauthSpec(), ResponseSpecs.returns200())
+        if (!authTokens.containsKey("admin")) {
+            String adminToken = new ValidatableCrudRequester(RequestSpecs.unauthSpec(),
+                    Endpoint.AUTH_LOGIN, ResponseSpecs.returns200())
                     .post(new LoginRequestModel(adminName, adminPass))
                     .extract()
                     .header("Authorization");
+
+            authTokens.put(adminName, adminToken);
         }
 
         return defaultRequestSpecs()
-                .addHeader("Authorization", adminToken)
+                .addHeader("Authorization", authTokens.get(adminName))
                 .build();
     }
 
     public static RequestSpecification authAsUserSpec(String name, String pass){
-        String userToken = new LoginRequest(RequestSpecs.unauthSpec(), ResponseSpecs.returns200())
-                .post(new LoginRequestModel(name, pass))
-                .extract()
-                .header("Authorization");
+        if (!authTokens.containsKey(name)) {
+            String userToken = new ValidatableCrudRequester(RequestSpecs.unauthSpec(),
+                    Endpoint.AUTH_LOGIN, ResponseSpecs.returns200())
+                    .post(new LoginRequestModel(name, pass))
+                    .extract()
+                    .header("Authorization");
+
+            authTokens.put(name, userToken);
+        }
 
         return defaultRequestSpecs()
-                .addHeader("Authorization", userToken)
+                .addHeader("Authorization", authTokens.get(name))
                 .build();
     }
 }

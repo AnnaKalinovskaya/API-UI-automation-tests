@@ -4,29 +4,27 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import requests.CreateBankAccountRequest;
-import requests.CreateUserRequest;
-import requests.DeleteUserRequest;
-import requests.GetAllBankAccountsRequest;
+import skelethon.requests.Endpoint;
+import skelethon.requests.ValidatableCrudRequester;
+import skelethon.steps.AdminSteps;
+import skelethon.steps.UserSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
 public class BaseTest {
+
     protected SoftAssertions softly;
-    protected static String userName = "hanna69";
-    protected static String userPass = "hannaPass1!";
     protected static UserProfileModel userProfile;
+    protected static UserSteps user;
 
     @BeforeAll
     public static void createUser(){
-        userProfile = new CreateUserRequest(RequestSpecs.adminSpec(), ResponseSpecs.returns201())
-                .post(new CreateUserRequestModel(userName, userPass, UserRole.USER))
-                .extract()
-                .body().as(UserProfileModel.class);
+        user = new UserSteps("hanna69", "hannaPass1!");
+        userProfile = AdminSteps.createUser(user.getName(), user.getPass());
     }
 
     @BeforeEach
-    public void setUps(){
+    public void setUp(){
         this.softly = new SoftAssertions();
     }
 
@@ -37,21 +35,7 @@ public class BaseTest {
 
     @AfterAll
     public static void deleteUser(){
-        new DeleteUserRequest(RequestSpecs.adminSpec(), ResponseSpecs.returns200())
+        new ValidatableCrudRequester(RequestSpecs.adminSpec(), Endpoint.USERS, ResponseSpecs.returns200())
                 .delete(userProfile.getId());
-    }
-
-    protected static BankAccountModel createBankAccount(){
-        return new CreateBankAccountRequest(RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns201())
-                .post()
-                .extract().body().as(BankAccountModel.class);
-    }
-
-    protected static BankAccountModel getBankAccount (Integer accountId){
-        return new GetAllBankAccountsRequest(
-                RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns200())
-                .getBankAccount(accountId);
     }
 }
