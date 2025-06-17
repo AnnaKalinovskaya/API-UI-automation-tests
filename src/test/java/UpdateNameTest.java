@@ -98,7 +98,8 @@ public class UpdateNameTest extends BaseTest{
         new ValidatableCrudRequester(
                 RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
                 Endpoint.UPDATE_CUSTOMER_PROFILE,
-                ResponseSpecs.returns400()).put(new CustomerNameRequestModel(inValidName));
+                ResponseSpecs.returns400())
+                .put(new CustomerNameRequestModel(inValidName));
 
         //check name via GET request
         String nameAfterUpdateRequest = new CrudRequester<UserProfileModel>(

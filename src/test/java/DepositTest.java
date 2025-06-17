@@ -28,8 +28,8 @@ public class DepositTest extends BaseTest{
 
     @ParameterizedTest
     @MethodSource("validDepositAmount")
-    public void userCanDepositValidAmount (BigDecimal validAmount){
-        BigDecimal depositAmount = validAmount.setScale(2, RoundingMode.HALF_UP);
+    public void userCanDepositValidAmount (double validAmount){
+        BigDecimal depositAmount = new BigDecimal(validAmount).setScale(2, RoundingMode.HALF_UP);
         //get initial balance
         BigDecimal initialBalance = user.getBankAccount(bankAccount.getId()).getBalance();
         BigDecimal expectedBalance = initialBalance.add(depositAmount);
@@ -56,9 +56,9 @@ public class DepositTest extends BaseTest{
 
     public static Stream<Arguments> validDepositAmount(){
         return Stream.of(
-                Arguments.of(new BigDecimal("0.01")),
-                Arguments.of(new BigDecimal("4999.99")),
-                Arguments.of(new BigDecimal("5000.0"))
+                Arguments.of(0.01),
+                Arguments.of(4999.99),
+                Arguments.of(5000.0)
         );
     }
 

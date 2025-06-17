@@ -79,10 +79,9 @@ public class TransferTest extends BaseTest{
 
     public static Stream<Arguments> validTransferAmount(){
         return Stream.of(
-//                Arguments.of(0.01),
-//                Arguments.of(9999.99),
-                Arguments.of(10000.00)//,
-//                Arguments.of(Double.MIN_VALUE)
+                Arguments.of(0.01),
+                Arguments.of(9999.99),
+                Arguments.of(10000.00)
         );
     }
 
