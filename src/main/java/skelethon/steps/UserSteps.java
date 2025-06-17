@@ -1,28 +1,32 @@
 package skelethon.steps;
 
+import lombok.Getter;
+import models.AllBankAccountsModel;
 import models.BankAccountModel;
+import models.DepositRequestModel;
 import skelethon.requests.CrudRequester;
 import skelethon.requests.Endpoint;
+import skelethon.requests.ValidatableCrudRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.concurrent.*;
+
 public class UserSteps {
 
+    @Getter
     private String name;
+    @Getter
     private String pass;
+    private final BigDecimal MAX_DEPOSIT = new BigDecimal(5000);
 
     public UserSteps(String name, String pass){
         this.name = name;
         this.pass = pass;
     };
-
-    public String getName() {
-        return name;
-    }
-
-    public String getPass() {
-        return pass;
-    }
 
     public BankAccountModel createBankAccount (){
         return new CrudRequester<BankAccountModel>(RequestSpecs.authAsUserSpec(name, pass),
@@ -30,11 +34,67 @@ public class UserSteps {
                 .post(null);
     }
 
-    public BankAccountModel getBankAccount (Integer accountId) {
-        var optionalResult = new CrudRequester<BankAccountModel>(RequestSpecs.authAsUserSpec(name, pass),
+    public AllBankAccountsModel getAllBankAccounts() {
+        List<BankAccountModel> allAccounts = new CrudRequester<BankAccountModel>(
+                RequestSpecs.authAsUserSpec(name, pass),
                 Endpoint.CUSTOMER_ACCOUNTS, ResponseSpecs.returns200())
-                .getList().stream().filter(account -> account.getId().equals(accountId)).findFirst();
+                .getList();
+        return new AllBankAccountsModel(allAccounts);
+    }
 
-        return optionalResult.orElse(null);
+    public BankAccountModel createAccountWithBalance(BigDecimal balance){
+        BankAccountModel bankAccount = createBankAccount();
+        deposit(bankAccount.getId(), balance);
+        return getAllBankAccounts().getAccount(bankAccount.getId());
+    }
+
+    public void deposit (Integer bankAccountId, BigDecimal amount){
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Invalid deposit amount: " + amount);
+        }
+
+        int requestCountWithMaxAmount = amount.divide(MAX_DEPOSIT, RoundingMode.DOWN).intValue();
+
+        if (requestCountWithMaxAmount != 0) {
+            ExecutorService executorService = Executors.newCachedThreadPool();
+
+            Future<?> depositTask = executorService.submit(() -> {
+                for (int i = 0; i < requestCountWithMaxAmount; i++) {
+                    sendDepositRequest(bankAccountId, MAX_DEPOSIT);
+                }
+            });
+
+            //wait until all deposit requests are sent
+            try {
+                depositTask.get();
+            } catch (ExecutionException | InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+
+            executorService.shutdown();
+            try {
+                if (executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+                    executorService.shutdownNow();
+                }
+            } catch (InterruptedException ie){
+                executorService.shutdownNow();
+            }
+        }
+
+        BigDecimal totalDeposited = MAX_DEPOSIT.multiply(new BigDecimal(requestCountWithMaxAmount));
+        BigDecimal leftOverAmount = amount.subtract(totalDeposited);
+        if (leftOverAmount.compareTo(BigDecimal.ZERO) > 0) {
+            sendDepositRequest(bankAccountId, leftOverAmount);
+        }
+    }
+
+    private void sendDepositRequest (Integer bankAccountId, BigDecimal amount){
+        new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(name, pass),
+                Endpoint.DEPOSIT, ResponseSpecs.returns200())
+                .post(DepositRequestModel
+                        .builder()
+                        .id(bankAccountId)
+                        .balance(amount)
+                        .build());
     }
 }

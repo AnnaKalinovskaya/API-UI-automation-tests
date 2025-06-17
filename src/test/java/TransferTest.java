@@ -23,23 +23,14 @@ public class TransferTest extends BaseTest{
     public void userCanTransferValidAmount(double validValue){
         BigDecimal amountToTransfer = BigDecimal.valueOf(validValue).setScale(2, RoundingMode.HALF_UP);
         //pre-conditions: create account with initial balance on sender account
-        BankAccountModel senderBankAccount = user.createBankAccount();
+        BankAccountModel senderBankAccount = user.createAccountWithBalance(new BigDecimal(15000));
         BankAccountModel receiverBankAccount = user.createBankAccount();
 
-        for (int i = 0; i < 3; i ++) {
-            new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
-                    Endpoint.DEPOSIT, ResponseSpecs.returns200())
-                    .post(DepositRequestModel
-                            .builder()
-                            .id(senderBankAccount.getId())
-                            .balance(BigDecimal.valueOf(5000))
-                            .build());
-        }
-
         //get initial values on both accounts
-        BigDecimal initialSenderBalance = user.getBankAccount(senderBankAccount.getId())
+        var allAccounts = user.getAllBankAccounts();
+        BigDecimal initialSenderBalance = allAccounts.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal initialReceiverBalance = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal initialReceiverBalance = allAccounts.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         BigDecimal expectedFinalSenderBalance = initialSenderBalance.subtract(amountToTransfer);
@@ -64,9 +55,10 @@ public class TransferTest extends BaseTest{
                 .isEqualTo("Transfer successful");
 
         //check balance state after transfer of sender and receiver
-        BigDecimal updatedSenderBalance = user.getBankAccount(senderBankAccount.getId())
+        var allAccountsUpdated = user.getAllBankAccounts();
+        BigDecimal updatedSenderBalance = allAccountsUpdated.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal updatedReceiverBalance = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal updatedReceiverBalance = allAccountsUpdated.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         softly.assertThat(updatedSenderBalance)
@@ -90,23 +82,14 @@ public class TransferTest extends BaseTest{
     public void userCanNotTransferInvalidAmount(double invalidValue){
         BigDecimal amountToTransfer = BigDecimal.valueOf(invalidValue).setScale(2, RoundingMode.HALF_UP);
         //pre-conditions: create account with initial balance on sender account
-        BankAccountModel senderBankAccount = user.createBankAccount();
+        BankAccountModel senderBankAccount = user.createAccountWithBalance(new BigDecimal(15000));
         BankAccountModel receiverBankAccount = user.createBankAccount();
 
-        for (int i = 0; i < 3; i ++) {
-            new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
-                    Endpoint.DEPOSIT, ResponseSpecs.returns200())
-                    .post(DepositRequestModel
-                            .builder()
-                            .id(senderBankAccount.getId())
-                            .balance(BigDecimal.valueOf(5000))
-                            .build());
-        }
-
         //get initial values in both accounts
-        BigDecimal initialSenderBalance = user.getBankAccount(senderBankAccount.getId())
+        var allAccounts = user.getAllBankAccounts();
+        BigDecimal initialSenderBalance = allAccounts.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal initialReceiverBalance = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal initialReceiverBalance = allAccounts.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         //send request to transfer invalid amount
@@ -120,9 +103,10 @@ public class TransferTest extends BaseTest{
                         .build());
 
         //check balance state after invalid transfer
-        BigDecimal senderBalanceAfterTransfer = user.getBankAccount(senderBankAccount.getId())
+        var allAccountsUpdated = user.getAllBankAccounts();
+        BigDecimal senderBalanceAfterTransfer = allAccountsUpdated.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal receiverBalanceAfterTransfer = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal receiverBalanceAfterTransfer = allAccountsUpdated.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         softly.assertThat(senderBalanceAfterTransfer)
@@ -146,21 +130,14 @@ public class TransferTest extends BaseTest{
     public void userCanTransferAllMoneyFromAccount(){
         BigDecimal amount = BigDecimal.valueOf(4000).setScale(2, RoundingMode.HALF_UP);
         //pre-conditions: create new bank account and deposit initial value
-        BankAccountModel senderBankAccount = user.createBankAccount();
+        BankAccountModel senderBankAccount = user.createAccountWithBalance(amount);
         BankAccountModel receiverBankAccount = user.createBankAccount();
 
-        new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
-                Endpoint.DEPOSIT, ResponseSpecs.returns200())
-                .post(DepositRequestModel
-                        .builder()
-                        .id(senderBankAccount.getId())
-                        .balance(amount)
-                        .build());
-
         //check balance before transfer accounts
-        BigDecimal initialSenderBalance = user.getBankAccount(senderBankAccount.getId())
+        var allAccounts = user.getAllBankAccounts();
+        BigDecimal initialSenderBalance = allAccounts.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal initialReceiverBalance = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal initialReceiverBalance = allAccounts.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         //send request to transfer all money
@@ -182,9 +159,10 @@ public class TransferTest extends BaseTest{
                 .isEqualTo("Transfer successful");
 
         //check balance state after transfer on both accounts
-        BigDecimal senderBalanceAfterTransfer = user.getBankAccount(senderBankAccount.getId())
+        var allAccountsUpdated = user.getAllBankAccounts();
+        BigDecimal senderBalanceAfterTransfer = allAccountsUpdated.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal receiverBalanceAfterTransfer = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal receiverBalanceAfterTransfer = allAccountsUpdated.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         softly.assertThat(receiverBalanceAfterTransfer)
@@ -198,18 +176,11 @@ public class TransferTest extends BaseTest{
     @Test
     public void userCanNotTransferMoreMoneyThanCurrentBalance(){
         //pre-conditions: create account with initial balance on sender account
-        BankAccountModel senderBankAccount = user.createBankAccount();
         BigDecimal randomDepositAmount = RandomDataGenerator.getRandomDepositAmount();
-        new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
-                Endpoint.DEPOSIT, ResponseSpecs.returns200())
-                .post(DepositRequestModel
-                        .builder()
-                        .id(senderBankAccount.getId())
-                        .balance(randomDepositAmount)
-                        .build());
+        BankAccountModel senderBankAccount = user.createAccountWithBalance(randomDepositAmount);
 
         BankAccountModel receiverBankAccount = user.createBankAccount();
-        BigDecimal initialReceiverBalance = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal initialReceiverBalance = user.getAllBankAccounts().getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         //send transfer request with random valid amount > than balance
@@ -226,9 +197,10 @@ public class TransferTest extends BaseTest{
                         .build());
 
         //assert that balance of sender and receiver hasn't changed
-        BigDecimal senderBalanceAfterTransfer = user.getBankAccount(senderBankAccount.getId())
+        var allAccounts = user.getAllBankAccounts();
+        BigDecimal senderBalanceAfterTransfer = allAccounts.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal receiverBalanceAfterTransfer = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal receiverBalanceAfterTransfer = allAccounts.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         softly.assertThat(receiverBalanceAfterTransfer)
@@ -244,7 +216,8 @@ public class TransferTest extends BaseTest{
         BigDecimal randomValidTransferAmount = RandomDataGenerator.getRandomDepositAmount();
 
         BankAccountModel receiverBankAccount = user.createBankAccount();
-        BigDecimal receiverBalanceBeforeRequest = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal receiverBalanceBeforeRequest = user.getAllBankAccounts()
+                .getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
@@ -256,7 +229,8 @@ public class TransferTest extends BaseTest{
                         .receiverAccountId(receiverBankAccount.getId())
                         .build());
 
-        BigDecimal receiverBalanceAfterRequest = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal receiverBalanceAfterRequest = user.getAllBankAccounts()
+                .getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         softly.assertThat(receiverBalanceAfterRequest)
@@ -269,7 +243,8 @@ public class TransferTest extends BaseTest{
         BigDecimal randomValidTransferAmount = RandomDataGenerator.getRandomDepositAmount();
 
         BankAccountModel senderBankAccount = user.createBankAccount();
-        BigDecimal senderBalanceBeforeRequest = user.getBankAccount(senderBankAccount.getId())
+        BigDecimal senderBalanceBeforeRequest = user.getAllBankAccounts()
+                .getAccount(senderBankAccount.getId())
                 .getBalance();
 
         new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
@@ -281,7 +256,8 @@ public class TransferTest extends BaseTest{
                         .receiverAccountId(99999)
                         .build());
 
-        BigDecimal senderBalanceAfterRequest = user.getBankAccount(senderBankAccount.getId())
+        BigDecimal senderBalanceAfterRequest = user.getAllBankAccounts()
+                .getAccount(senderBankAccount.getId())
                 .getBalance();
 
         softly.assertThat(senderBalanceAfterRequest)
@@ -292,17 +268,11 @@ public class TransferTest extends BaseTest{
     @Test
     public void senderAndReceiverAccountCannotBeTheSame() {
         //pre-conditions: create account with balance required for test
-        BankAccountModel senderBankAccount = user.createBankAccount();
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
-        new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
-                Endpoint.DEPOSIT, ResponseSpecs.returns200())
-                .post(DepositRequestModel
-                        .builder()
-                        .id(senderBankAccount.getId())
-                        .balance(randomAmount)
-                        .build());
+        BankAccountModel senderBankAccount = user.createAccountWithBalance(randomAmount);
 
-        BigDecimal senderBalanceBeforeRequest = user.getBankAccount(senderBankAccount.getId())
+        BigDecimal senderBalanceBeforeRequest = user.getAllBankAccounts()
+                .getAccount(senderBankAccount.getId())
                 .getBalance();
 
         new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
@@ -314,7 +284,8 @@ public class TransferTest extends BaseTest{
                         .receiverAccountId(senderBankAccount.getId())
                         .build());
 
-        BigDecimal senderBalanceAfterRequest = user.getBankAccount(senderBankAccount.getId())
+        BigDecimal senderBalanceAfterRequest = user.getAllBankAccounts()
+                .getAccount(senderBankAccount.getId())
                 .getBalance();
 
         softly.assertThat(senderBalanceAfterRequest)
@@ -326,39 +297,19 @@ public class TransferTest extends BaseTest{
     @Test
     public void transferMoneyConcurrentlyWithSameAccounts() {
         //pre-conditions: create account and deposit amount of at least 500 000
-        BankAccountModel senderBankAccount = user.createBankAccount();
-        BigDecimal depositAmount = BigDecimal.valueOf(5000);
-        ExecutorService executorService = Executors.newCachedThreadPool();
-
-        Future<?> depositTask = executorService.submit(() -> {
-                        for (int i = 1; i <= 100; i++) {
-                            new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
-                                    Endpoint.DEPOSIT, ResponseSpecs.returns200())
-                                    .post(DepositRequestModel
-                                            .builder()
-                                            .id(senderBankAccount.getId())
-                                            .balance(depositAmount)
-                                            .build());
-                        }
-            });
-
-        //wait until all deposit requests are sent
-        try {
-            depositTask.get();
-        } catch (ExecutionException | InterruptedException e) {
-            System.out.println(e.getMessage());
-        }
-
+        BankAccountModel senderBankAccount = user.createAccountWithBalance(new BigDecimal(500000));
         BankAccountModel receiverBankAccount = user.createBankAccount();
 
         //check balance before requests
-        BigDecimal senderBalanceBEFORETransfer = user.getBankAccount(senderBankAccount.getId())
+        var allAccounts = user.getAllBankAccounts();
+        BigDecimal senderBalanceBEFORETransfer = allAccounts.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal receiverBalanceBEFORETransfer = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal receiverBalanceBEFORETransfer = allAccounts.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         //send 50 transfer requests
         BigDecimal transferAmount = BigDecimal.valueOf(10000);
+        ExecutorService executorService = Executors.newCachedThreadPool();
         Future<?> transferTask = executorService.submit(() -> {
             for (int i = 1; i <= 50; i++){
                 new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
@@ -391,9 +342,10 @@ public class TransferTest extends BaseTest{
         BigDecimal totalTransferAmount = transferAmount.multiply(BigDecimal.valueOf(50));
 
         //assert that sender and receiver balances were updated accordingly
-        BigDecimal senderBalanceAFTERTransfer = user.getBankAccount(senderBankAccount.getId())
+        var allAccountsUpdated = user.getAllBankAccounts();
+        BigDecimal senderBalanceAFTERTransfer = allAccountsUpdated.getAccount(senderBankAccount.getId())
                 .getBalance();
-        BigDecimal receiverBalanceAFTERTransfer = user.getBankAccount(receiverBankAccount.getId())
+        BigDecimal receiverBalanceAFTERTransfer = allAccountsUpdated.getAccount(receiverBankAccount.getId())
                 .getBalance();
 
         softly.assertThat(senderBalanceAFTERTransfer)
