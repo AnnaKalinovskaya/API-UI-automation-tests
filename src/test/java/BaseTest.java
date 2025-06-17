@@ -1,3 +1,4 @@
+import generators.RandomDataGenerator;
 import models.*;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
@@ -19,7 +20,7 @@ public class BaseTest {
 
     @BeforeAll
     public static void createUser(){
-        user = new UserSteps("hanna69", "hannaPass1!");
+        user = new UserSteps(RandomDataGenerator.getRandomUserName(), RandomDataGenerator.getRandomPass());
         userProfile = AdminSteps.createUser(user.getName(), user.getPass());
     }
 

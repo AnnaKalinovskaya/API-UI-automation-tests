@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 @Data
 @AllArgsConstructor
@@ -17,8 +16,4 @@ public class TransferRequestModel extends BaseModel{
     private Integer senderAccountId;
     private Integer receiverAccountId;
     private BigDecimal amount;
-
-    public BigDecimal getAmount (){
-        return this.amount.setScale(2, RoundingMode.HALF_UP);
-    }
 }

@@ -1,5 +1,6 @@
 package specs;
 
+import config.Config;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class RequestSpecs {
 
-    private static String baseURI = "http://localhost:4111/api/v1";
+    private static String baseURI = Config.getProperty("server") + Config.getProperty("apiVersion");
     private static String adminName = "admin";
     private static String adminPass = "admin";
     private static HashMap<String, String> authTokens = new HashMap<>();
