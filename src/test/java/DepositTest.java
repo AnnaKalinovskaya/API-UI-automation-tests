@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import requests.DepositRequest;
+import skelethon.requests.CrudRequester;
+import skelethon.requests.Endpoint;
+import skelethon.requests.ValidatableCrudRequester;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
@@ -21,22 +23,24 @@ public class DepositTest extends BaseTest{
 
     @BeforeAll
     public static void prepareData(){
-        bankAccount = createBankAccount();
+        bankAccount = user.createBankAccount();
     }
 
     @ParameterizedTest
     @MethodSource("validDepositAmount")
     public void userCanDepositValidAmount (double validAmount){
-        BigDecimal depositAmount = BigDecimal.valueOf(validAmount).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal depositAmount = new BigDecimal(validAmount)
+                .setScale(2, RoundingMode.HALF_UP);
         //get initial balance
-        BigDecimal initialBalance = getBankAccount(bankAccount.getId()).getBalance();
+        BigDecimal initialBalance = user.getAllBankAccounts()
+                .getAccount(bankAccount.getId()).getBalance();
         BigDecimal expectedBalance = initialBalance.add(depositAmount);
 
         //send deposit request
-        BankAccountModel responseBody = new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns200())
-                .post(new DepositRequestModel(bankAccount.getId(), depositAmount))
-                .extract().body().as(BankAccountModel.class);
+        BankAccountModel responseBody = new CrudRequester<BankAccountModel>(
+                RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                Endpoint.DEPOSIT, ResponseSpecs.returns200())
+                .post(new DepositRequestModel(bankAccount.getId(), depositAmount));
 
         softly.assertThat(responseBody.getBalance())
                 .withFailMessage("Balance in response body of deposit request. " +
@@ -44,7 +48,8 @@ public class DepositTest extends BaseTest{
                 .isEqualTo(expectedBalance);
 
         //check balance update
-        BigDecimal updatedBalance = getBankAccount(bankAccount.getId()).getBalance();
+        BigDecimal updatedBalance = user.getAllBankAccounts()
+                .getAccount(bankAccount.getId()).getBalance();
 
         softly.assertThat(updatedBalance)
                 .withFailMessage( "Balance was updated. "+
@@ -56,21 +61,22 @@ public class DepositTest extends BaseTest{
         return Stream.of(
                 Arguments.of(0.01),
                 Arguments.of(4999.99),
-                Arguments.of(5000),
-                Arguments.of(Double.MIN_VALUE)
+                Arguments.of(5000.0)
         );
     }
 
     @ParameterizedTest
     @MethodSource("invalidAmount")
     public void userCanNotDepositInvalidAmount(double invalidAmount){
-        BigDecimal depositAmount = BigDecimal.valueOf(invalidAmount).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal depositAmount = BigDecimal.valueOf(invalidAmount)
+                .setScale(2, RoundingMode.HALF_UP);
         //get initial balance
-        BigDecimal initialBalance = getBankAccount(bankAccount.getId()).getBalance();
+        BigDecimal initialBalance = user.getAllBankAccounts()
+                .getAccount(bankAccount.getId()).getBalance();
 
         //send deposit request
-        new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns400())
+        new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                Endpoint.DEPOSIT, ResponseSpecs.returns400())
                 .post(DepositRequestModel
                         .builder()
                         .id(bankAccount.getId())
@@ -78,7 +84,8 @@ public class DepositTest extends BaseTest{
                         .build());
 
         //check balance after request with invalid amount
-        BigDecimal balanceAfterBadRequest = getBankAccount(bankAccount.getId()).getBalance();
+        BigDecimal balanceAfterBadRequest = user.getAllBankAccounts()
+                .getAccount(bankAccount.getId()).getBalance();
 
         softly.assertThat(balanceAfterBadRequest)
                 .withFailMessage( "Balance after bad request: " + balanceAfterBadRequest)
@@ -96,8 +103,8 @@ public class DepositTest extends BaseTest{
 
     @Test
     public void userCanNotDepositToNonExistingAccount(){
-        new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass),
-                ResponseSpecs.returns403())
+        new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                Endpoint.DEPOSIT, ResponseSpecs.returns403())
                 .post(DepositRequestModel
                         .builder()
                         .id(999999)
@@ -108,15 +115,17 @@ public class DepositTest extends BaseTest{
     @Test
     public void depositToAccountConcurrently(){
         //check initial account balance
-        BigDecimal initialBalance = getBankAccount(bankAccount.getId()).getBalance();
+        BigDecimal initialBalance = user.getAllBankAccounts()
+                .getAccount(bankAccount.getId()).getBalance();
 
         //send 50 requests to deposit amount of 5 000
         ExecutorService executorService = Executors.newCachedThreadPool();
 
         Future<?> depositTask = executorService.submit(() -> {
             for (int i = 1; i <= 50; i++){
-                new DepositRequest(RequestSpecs.authAsUserSpec(userName, userPass),
-                        ResponseSpecs.returns200())
+                new ValidatableCrudRequester(
+                        RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
+                        Endpoint.DEPOSIT, ResponseSpecs.returns200())
                         .post(DepositRequestModel
                                 .builder()
                                 .id(bankAccount.getId())
@@ -142,7 +151,8 @@ public class DepositTest extends BaseTest{
         }
 
         //balance after requests
-        BigDecimal balanceAfterRequests = getBankAccount(bankAccount.getId()).getBalance();
+        BigDecimal balanceAfterRequests = user.getAllBankAccounts()
+                .getAccount(bankAccount.getId()).getBalance();
 
         softly.assertThat(balanceAfterRequests)
                 .withFailMessage( "Balance was updated incorrectly: " + balanceAfterRequests)

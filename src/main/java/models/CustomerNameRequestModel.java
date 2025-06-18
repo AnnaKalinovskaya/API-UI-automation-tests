@@ -11,5 +11,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CustomerNameRequestModel extends BaseModel{
 
-    private String newName;
+    private String name;
 }

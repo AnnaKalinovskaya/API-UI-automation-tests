@@ -1,5 +1,7 @@
 package generators;
 
+import org.apache.commons.lang3.RandomStringUtils;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Random;
@@ -21,12 +23,20 @@ public class RandomDataGenerator {
         return sb.toString();
     }
 
-    public static BigDecimal getRandomDepositAmount(){
-        return getRandomAmount(0.01, 5000);
+    public static String getRandomUserName(){
+        return RandomStringUtils.randomAlphabetic(5)
+                + RandomStringUtils.randomNumeric(5);
     }
 
-    public static BigDecimal getRandomTransferAmount(){
-        return getRandomAmount(0.01, 10000);
+    public static String getRandomPass() {
+        return RandomStringUtils.randomAlphabetic(3).toUpperCase()
+                + RandomStringUtils.randomAlphabetic(3).toLowerCase()
+                + RandomStringUtils.randomNumeric(3)
+                + "!";
+    }
+
+    public static BigDecimal getRandomDepositAmount(){
+        return getRandomAmount(0.01, 5000);
     }
 
     public static BigDecimal getRandomAmount(double from, double to){
