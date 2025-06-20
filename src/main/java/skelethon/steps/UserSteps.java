@@ -4,6 +4,7 @@ import lombok.Getter;
 import models.AllBankAccountsModel;
 import models.BankAccountModel;
 import models.DepositRequestModel;
+import models.UserProfileModel;
 import skelethon.requests.CrudRequester;
 import skelethon.requests.Endpoint;
 import skelethon.requests.ValidatableCrudRequester;
@@ -26,7 +27,15 @@ public class UserSteps {
     public UserSteps(String name, String pass){
         this.name = name;
         this.pass = pass;
-    };
+    }
+
+    public UserProfileModel getCustomerProfile(){
+        return new CrudRequester<UserProfileModel>(
+                RequestSpecs.authAsUserSpec(this.name, this.pass),
+                Endpoint.GET_CUSTOMER_PROFILE,
+                ResponseSpecs.returns200())
+                .get();
+    }
 
     public BankAccountModel createBankAccount (){
         return new CrudRequester<BankAccountModel>(RequestSpecs.authAsUserSpec(name, pass),

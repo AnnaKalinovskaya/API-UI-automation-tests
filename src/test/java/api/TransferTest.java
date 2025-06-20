@@ -1,3 +1,5 @@
+package api;
+
 import generators.RandomDataGenerator;
 import models.*;
 import models.comparison.ModelAssertions;

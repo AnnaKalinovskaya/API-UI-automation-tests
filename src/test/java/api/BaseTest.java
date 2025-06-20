@@ -1,3 +1,5 @@
+package api;
+
 import generators.RandomDataGenerator;
 import models.*;
 import org.assertj.core.api.SoftAssertions;
@@ -11,8 +13,6 @@ import skelethon.steps.AdminSteps;
 import skelethon.steps.UserSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
-
-import java.math.BigDecimal;
 
 public class BaseTest {
 
