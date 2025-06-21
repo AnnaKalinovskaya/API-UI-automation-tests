@@ -10,8 +10,8 @@ public class UserDashboard extends Dashboard {
 
     @Getter
     private final SelenideElement welcomeLabel = $(Selectors.byClassName("welcome-text"));
-    private final SelenideElement depositMoneyButton = $(Selectors.byXpath("//button[contains(text(),'Deposit Money']"));
-    private final SelenideElement makeTransferButton = $(Selectors.byXpath("//button[contains(text(),'Make a Transfer']"));
+    private final SelenideElement depositMoneyButton = $(Selectors.byXpath("//button[contains(text(),'Deposit')]"));
+    private final SelenideElement makeTransferButton = $(Selectors.byXpath("//button[contains(text(),'Make a Transfer')]"));
 
     public EditProfilePage goToUserInfo(){
         profileName.click();

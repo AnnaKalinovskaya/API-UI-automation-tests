@@ -5,10 +5,11 @@ import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
 
 import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.$$;
 
 public class TransferPage {
 
-    private final SelenideElement senderAccountDropDown = $(Selectors.byClassName("form-control account-selector"));
+    private final ElementsCollection senderAccountDropDown = $$(Selectors.byXpath("//select[contains(@class, 'account-selector')]/option"));
     private final SelenideElement recipientName = $(Selectors.byAttribute("placeholder",
             "Enter recipient name"));
     private final SelenideElement recipientAccountNumber = $(Selectors.byAttribute("placeholder",
@@ -20,8 +21,9 @@ public class TransferPage {
 
 
     public TransferPage selectSenderAccount(String accountName){
-        senderAccountDropDown.getSelectedOptions()
-                .stream().filter(option -> option.getText().contains("accountName"))
+        senderAccountDropDown.get(0).click();
+        senderAccountDropDown.stream()
+                .filter(option -> option.getText().contains(accountName))
                 .findFirst().get().click();
         return this;
     }
@@ -52,6 +54,12 @@ public class TransferPage {
     }
 
     public ElementsCollection getAccountOptions(){
-        return senderAccountDropDown.getOptions();
+        return senderAccountDropDown;
+    }
+
+    public String getBankAccountText(String accountNumber){
+        return senderAccountDropDown
+                .stream().filter(option -> option.getText().contains(accountNumber))
+                .findFirst().get().getText();
     }
 }

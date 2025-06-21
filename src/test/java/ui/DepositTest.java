@@ -1,60 +1,52 @@
 package ui;
 
+import com.codeborne.selenide.SelenideElement;
 import generators.RandomDataGenerator;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import pages.DepositPage;
-import skelethon.steps.AdminSteps;
-import skelethon.steps.UserSteps;
+import pages.UserDashboard;
 
 import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DepositTest extends BaseTest{
 
-    @ParameterizedTest
-    @ValueSource(doubles = {500.00})
-    public void depositValidAmount(double validAmount){
-        String userName = RandomDataGenerator.getRandomUserName();
-        String pass = RandomDataGenerator.getRandomPass();
-        AdminSteps.createUser(userName, pass);
-        var bankAccount = new UserSteps(userName, pass).createBankAccount();
-        double initialBalance = bankAccount.getBalance().doubleValue();
+    @Test
+    public void depositValidAmount(){
+        BigDecimal validAmount = RandomDataGenerator.getRandomDepositAmount();
+        var bankAccount = user.createBankAccount();
+        BigDecimal initialBalance = bankAccount.getBalance();
 
-        openUserDashboard(userName, pass)
+        openUserDashboard(user.getName(), user.getPass())
                 .goToDeposit()
                 .selectAccount(bankAccount.getAccountNumber())
-                .enterAmount(validAmount)
+                .enterAmount(validAmount.doubleValue())
                 .clickDeposit();
 
         String alertText = confirmAlertAndGetText();
-        assertThat(alertText).contains(String.format("Successfully deposited %s to account %s!", validAmount, bankAccount.getAccountNumber()));
+        assertThat(alertText).contains(String.format("Successfully deposited $%s to account %s!", validAmount, bankAccount.getAccountNumber()));
 
-        String accountInDropDrown = new DepositPage().getAccountOptions()
+        String accountInDropDrown = new UserDashboard().goToDeposit().getAccountOptions()
                 .stream().filter(option -> option.getText().contains(bankAccount.getAccountNumber()))
                 .findFirst().get().getText();
-        double expectedBalance = initialBalance + validAmount;
+        BigDecimal expectedBalance = initialBalance.add(validAmount);
         assertThat(accountInDropDrown).contains(String.valueOf(expectedBalance));
 
-        BigDecimal balanceApiResult = new UserSteps(userName, pass).getAllBankAccounts()
+        BigDecimal balanceApiResult = user.getAllBankAccounts()
                 .getAccount(bankAccount.getId()).getBalance();
-        assertThat(balanceApiResult).isEqualTo(new BigDecimal(expectedBalance));
+        assertThat(balanceApiResult).isEqualTo(expectedBalance);
     }
 
-    @ParameterizedTest
-    @ValueSource(doubles = {6000.00})
-    public void depositInvalidAmount(double invalidAmount){
-        String userName = RandomDataGenerator.getRandomUserName();
-        String pass = RandomDataGenerator.getRandomPass();
-        AdminSteps.createUser(userName, pass);
-        var bankAccount = new UserSteps(userName, pass).createBankAccount();
+    @Test
+    public void depositInvalidAmount(){
+        BigDecimal invalidAmount = RandomDataGenerator.getRandomAmount(5000, 10000);
+        var bankAccount = user.createBankAccount();
         BigDecimal initialBalance = bankAccount.getBalance();
 
-        openUserDashboard(userName, pass)
+        openUserDashboard(user.getName(), user.getPass())
                 .goToDeposit()
                 .selectAccount(bankAccount.getAccountNumber())
-                .enterAmount(invalidAmount)
+                .enterAmount(invalidAmount.doubleValue())
                 .clickDeposit();
 
         String alertText = confirmAlertAndGetText();
@@ -65,52 +57,48 @@ public class DepositTest extends BaseTest{
                 .findFirst().get().getText();
         assertThat(createdAccountOption).contains(String.valueOf(initialBalance));
 
-        BigDecimal balanceApiResult = new UserSteps(userName, pass).getAllBankAccounts()
+        BigDecimal balanceApiResult = user.getAllBankAccounts()
                 .getAccount(bankAccount.getId()).getBalance();
         assertThat(balanceApiResult).isEqualTo(initialBalance);
     }
 
-    @ParameterizedTest
-    @ValueSource(doubles = {4000})
-    public void accountNotSelected(double validAmount){
-        String userName = RandomDataGenerator.getRandomUserName();
-        String pass = RandomDataGenerator.getRandomPass();
-        AdminSteps.createUser(userName, pass);
-        var userSteps = new UserSteps(userName, pass);
-        userSteps.createBankAccount();
-        var accountsApi = userSteps.getAllBankAccounts();
+    @Test
+    public void accountNotSelected(){
+        BigDecimal validAmount = RandomDataGenerator.getRandomDepositAmount();
+        user.createBankAccount();
+        var accountsApi = user.getAllBankAccounts();
 
-        DepositPage depositPage = openUserDashboard(userName, pass).goToDeposit();
-        var accountOptionsBeforeDeposit = depositPage.getAccountOptions();
-        depositPage.enterAmount(validAmount).clickDeposit();
+        DepositPage depositPage = openUserDashboard(user.getName(), user.getPass()).goToDeposit();
+        var accountOptionsBeforeDeposit = depositPage.getAccountOptions()
+                .stream().map(SelenideElement::getText).toList();
+        depositPage.enterAmount(validAmount.doubleValue()).clickDeposit();
 
         String alertText = confirmAlertAndGetText();
         assertThat(alertText).contains("Please select an account.");
 
-        var accountOptionsAfterDeposit = new DepositPage().getAccountOptions();
-        var accountsApiAfterDeposit = userSteps.getAllBankAccounts();
+        var accountOptionsAfterDeposit = new DepositPage().getAccountOptions()
+                .stream().map(SelenideElement::getText).toList();
+        var accountsApiAfterDeposit = user.getAllBankAccounts();
         assertThat(accountOptionsAfterDeposit).isEqualTo(accountOptionsBeforeDeposit);
         assertThat(accountsApiAfterDeposit).isEqualTo(accountsApi);
     }
 
     @Test
     public void amountFieldIsEmpty(){
-        String userName = RandomDataGenerator.getRandomUserName();
-        String pass = RandomDataGenerator.getRandomPass();
-        AdminSteps.createUser(userName, pass);
-        var userSteps = new UserSteps(userName, pass);
-        var bankAccount = userSteps.createBankAccount();
-        var accountsApi = userSteps.getAllBankAccounts();
+        var bankAccount = user.createBankAccount();
+        var accountsApi = user.getAllBankAccounts();
 
-        DepositPage depositPage = openUserDashboard(userName, pass).goToDeposit();
-        var accountOptionsBeforeDeposit = depositPage.getAccountOptions();
+        DepositPage depositPage = openUserDashboard(user.getName(), user.getPass()).goToDeposit();
+        var accountOptionsBeforeDeposit = depositPage.getAccountOptions()
+                .stream().map(SelenideElement::getText).toList();
         depositPage.selectAccount(bankAccount.getAccountNumber()).clickDeposit();
 
         String alertText = confirmAlertAndGetText();
         assertThat(alertText).contains("Please enter a valid amount.");
 
-        var accountOptionsAfterDeposit = new DepositPage().getAccountOptions();
-        var accountsApiAfterDeposit = userSteps.getAllBankAccounts();
+        var accountOptionsAfterDeposit = new DepositPage().getAccountOptions()
+                .stream().map(SelenideElement::getText).toList();
+        var accountsApiAfterDeposit = user.getAllBankAccounts();
         assertThat(accountOptionsAfterDeposit).isEqualTo(accountOptionsBeforeDeposit);
         assertThat(accountsApiAfterDeposit).isEqualTo(accountsApi);
     }
