@@ -9,6 +9,8 @@ import static com.codeborne.selenide.Selenide.$$;
 
 public class TransferPage {
 
+    private final SelenideElement transferAgainButton = $(Selectors.byXpath("//button[contains(text(), 'Transfer Again')]"));
+
     private final ElementsCollection senderAccountDropDown = $$(Selectors.byXpath("//select[contains(@class, 'account-selector')]/option"));
     private final SelenideElement recipientName = $(Selectors.byAttribute("placeholder",
             "Enter recipient name"));
@@ -17,6 +19,7 @@ public class TransferPage {
     private final SelenideElement amountField = $(Selectors.byAttribute("placeholder",
             "Enter amount"));
     private final SelenideElement confirmCheck = $(Selectors.byId("confirmCheck"));
+
     private final SelenideElement sendTransferButton = $(Selectors.byXpath("//button[contains(text(), 'Send Transfer')]"));
 
 
@@ -53,13 +56,14 @@ public class TransferPage {
         return this;
     }
 
-    public ElementsCollection getAccountOptions(){
-        return senderAccountDropDown;
-    }
-
     public String getBankAccountText(String accountNumber){
         return senderAccountDropDown
                 .stream().filter(option -> option.getText().contains(accountNumber))
                 .findFirst().get().getText();
+    }
+
+    public TransactionsPage clickTransferAgain(){
+        transferAgainButton.click();
+        return new TransactionsPage();
     }
 }
