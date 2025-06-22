@@ -10,9 +10,9 @@ Steps:
 
 Expected result:
 1. Pop up: Name updated successfully!
-2. On the UI in the Header user name was updated to new name
-4. Go to Home screen: name was updated on the Dashboard as well
-3. Check via API that name updated
+2. On the UI in the Header user name was updated to new set name
+4. Go to Home screen: name was updated on the Dashboard to new name as well
+3. Check via API that name is now equals to newly set
 
 
 -----TEST 2: User can NOT change name with invalid value
@@ -40,7 +40,7 @@ Steps:
 4. Click [Deposit]
 
 Expected result:
-1. Pop up: Successfully deposited <entered amount> to account <created account>!
+1. Pop up: Successfully deposited <test amount> to account <created test account>!
 2. Check Select Account drop-down: Account balance was updated with deposited amount.
 3. Check via API that account balance was updated with deposited amount
 
@@ -95,9 +95,9 @@ Steps:
 4. Click [Send Transfer]
 
 Expected result:
-1. Pop up: Successfully transferred <entered amount> to account <entered account>!
-2. Check Select Account drop-down: both accounts balance was updated with transferred amount.
-3. Check via API that both accounts balance was updated with transferred amount
+1. Pop up: Successfully transferred <entered test amount> to account <created receiver account>!
+2. Check Select Account drop-down: sender balance was reduced and receiver balance was increased with transferred amount
+3. Check via API that sender balance was reduced and receiver balance was increased with transferred amount
 
 -----TEST 2: User can NOT transfer INvalid amount between accounts
 
@@ -130,7 +130,7 @@ Expected result:
 2. Check Accounts drop-down: accounts balance weren't updated
 3. Check via API that accounts balance weren't updated
 
------TEST 4: Error message is displayed if Recipient Name is empty
+-----TEST 4: Error when Recipient Name is empty
 
 Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
 Steps:
@@ -141,7 +141,7 @@ Steps:
 5. Click [Send Transfer]
 
 Expected result:
-1. Error: The recipient name does not match the registered name.
+1. Error: Please fill all fields and confirm.
 2. Check Accounts drop-down: accounts balance weren't updated
 3. Check via API that accounts balance weren't updated
 
