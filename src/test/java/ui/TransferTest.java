@@ -94,7 +94,7 @@ public class TransferTest extends BaseTest {
     }
 
     @Test
-    public void transferWithRecipientNameEmpty(){
+    public void errorWhenRecipientNameEmpty(){
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
         UserSteps user = createRandomUser();
         var validAmount = RandomDataGenerator.getRandomDepositAmount();
@@ -114,25 +114,21 @@ public class TransferTest extends BaseTest {
 
         //Assert alert text
         String alertText = confirmAlertAndGetText();
-        assertThat(alertText).contains(String.format("Successfully transferred $%s to account %s!",
-                validAmount, receiverBankAccount.getAccountNumber()));
+        assertThat(alertText).contains("Please fill all fields and confirm.");
 
-        //Check 'Select Account' drop-down: sender balance was reduced
-        // and receiver balance was increased with transferred amount.
+        //Check Accounts drop-down: accounts balance weren't updated
         var transferPage = new TransferPage();
-        var expectedSenderBalance = initialSenderBalance.subtract(validAmount);
-        var expectedReceiverBalance = initialReceiverBalance.add(validAmount);
-
         assertThat(transferPage.getBankAccountText(senderBankAccount.getAccountNumber()))
-                .contains(String.valueOf(expectedSenderBalance));
+                .contains(String.valueOf(initialSenderBalance));
         assertThat(transferPage.getBankAccountText(receiverBankAccount.getAccountNumber()))
-                .contains(String.valueOf(expectedReceiverBalance));
-        //Check via API that sender balance was reduced and receiver balance was increased with transferred amount.
+                .contains(String.valueOf(initialReceiverBalance));
+
+        //Check via API that accounts balance weren't updated
         var accountsApi = user.getAllBankAccounts();
         var senderBalanceApi = accountsApi.getAccount(senderBankAccount.getId()).getBalance();
         var receiverBalanceApi = accountsApi.getAccount(receiverBankAccount.getId()).getBalance();
-        assertThat(senderBalanceApi).isEqualTo(expectedSenderBalance);
-        assertThat(receiverBalanceApi).isEqualTo(expectedReceiverBalance);
+        assertThat(senderBalanceApi).isEqualTo(initialSenderBalance);
+        assertThat(receiverBalanceApi).isEqualTo(initialReceiverBalance);
     }
 
     @Test
