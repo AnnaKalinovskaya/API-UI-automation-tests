@@ -46,12 +46,12 @@ public class TransferPage {
         return this;
     }
 
-    public TransferPage confirm(){
+    public TransferPage clickConfirm(){
         confirmCheck.click();
         return this;
     }
 
-    public TransferPage sendTransfer(){
+    public TransferPage cickSendTransfer(){
         sendTransferButton.click();
         return this;
     }

@@ -1,10 +1,7 @@
 package skelethon.steps;
 
 import lombok.Getter;
-import models.AllBankAccountsModel;
-import models.BankAccountModel;
-import models.DepositRequestModel;
-import models.UserProfileModel;
+import models.*;
 import skelethon.requests.CrudRequester;
 import skelethon.requests.Endpoint;
 import skelethon.requests.ValidatableCrudRequester;
@@ -95,6 +92,17 @@ public class UserSteps {
         if (leftOverAmount.compareTo(BigDecimal.ZERO) > 0) {
             sendDepositRequest(bankAccountId, leftOverAmount);
         }
+    }
+
+    public void transfer(Integer senderAccountID, Integer receiverAccountID, BigDecimal amount){
+        new ValidatableCrudRequester(RequestSpecs.authAsUserSpec(name, pass),
+                Endpoint.TRANSFER, ResponseSpecs.returns200())
+                .post(TransferRequestModel
+                        .builder()
+                        .senderAccountId(senderAccountID)
+                        .receiverAccountId(receiverAccountID)
+                        .amount(amount)
+                        .build());
     }
 
     private void sendDepositRequest (Integer bankAccountId, BigDecimal amount){

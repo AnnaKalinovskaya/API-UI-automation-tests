@@ -16,6 +16,7 @@ import skelethon.steps.UserSteps;
 import specs.RequestSpecs;
 import specs.ResponseSpecs;
 
+import java.util.LinkedList;
 import java.util.Map;
 
 import static com.codeborne.selenide.Selenide.executeJavaScript;
@@ -23,8 +24,7 @@ import static com.codeborne.selenide.Selenide.switchTo;
 
 public class BaseTest {
 
-    protected static UserProfileModel userProfile;
-    protected static UserSteps user;
+    private static LinkedList<UserProfileModel> randomUsers = new LinkedList<>();
 
     @BeforeAll
     public static void setupSelenoid() {
@@ -38,10 +38,11 @@ public class BaseTest {
         );
     }
 
-    @BeforeAll
-    public static void createUser(){
-        user = new UserSteps(RandomDataGenerator.getRandomUserName(), RandomDataGenerator.getRandomPass());
-        userProfile = AdminSteps.createUser(user.getName(), user.getPass());
+    protected static UserSteps createRandomUser(){
+        UserSteps user = new UserSteps(RandomDataGenerator.getRandomUserName(), RandomDataGenerator.getRandomPass());
+        UserProfileModel userProfile = AdminSteps.createUser(user.getName(), user.getPass());
+        randomUsers.add(userProfile);
+        return user;
     }
 
     protected UserDashboard openUserDashboard(String userName, String pass){
@@ -67,7 +68,9 @@ public class BaseTest {
 
     @AfterAll
     public static void deleteUser(){
-        new ValidatableCrudRequester(RequestSpecs.adminSpec(), Endpoint.USERS, ResponseSpecs.returns200())
-                .delete(userProfile.getId());
+        for (UserProfileModel user : randomUsers) {
+            new ValidatableCrudRequester(RequestSpecs.adminSpec(), Endpoint.USERS, ResponseSpecs.returns200())
+                    .delete(user.getId());
+        }
     }
 }
