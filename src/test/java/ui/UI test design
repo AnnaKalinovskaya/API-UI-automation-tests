@@ -10,9 +10,9 @@ Steps:
 
 Expected result:
 1. Pop up: Name updated successfully!
-2. On the UI in the Header user name was updated to new name
-4. Go to Home screen: name was updated on the Dashboard as well
-3. Check via API that name updated
+2. On the UI in the Header user name was updated to new set name
+4. Go to Home screen: name was updated on the Dashboard to new name as well
+3. Check via API that name is now equals to newly set
 
 
 -----TEST 2: User can NOT change name with invalid value
@@ -40,7 +40,7 @@ Steps:
 4. Click [Deposit]
 
 Expected result:
-1. Pop up: Successfully deposited <entered amount> to account <created account>!
+1. Pop up: Successfully deposited <test amount> to account <created test account>!
 2. Check Select Account drop-down: Account balance was updated with deposited amount.
 3. Check via API that account balance was updated with deposited amount
 
@@ -95,9 +95,9 @@ Steps:
 4. Click [Send Transfer]
 
 Expected result:
-1. Pop up: Successfully transferred <entered amount> to account <entered account>!
-2. Check Select Account drop-down: both accounts balance was updated with transferred amount.
-3. Check via API that both accounts balance was updated with transferred amount
+1. Pop up: Successfully transferred <entered test amount> to account <created receiver account>!
+2. Check Select Account drop-down: sender balance was reduced and receiver balance was increased with transferred amount
+3. Check via API that sender balance was reduced and receiver balance was increased with transferred amount
 
 -----TEST 2: User can NOT transfer INvalid amount between accounts
 
@@ -115,28 +115,18 @@ Expected result:
 2. Check Select Account drop-down: both accounts balance were NOT updated
 3. Check via API that both account balance were NOT updated with transferred amount
 
------TEST 3: User can NOT transfer INvalid amount between accounts
+-----TEST 3: Error message is displayed if one of the required fields is empty
+(Fields to check for empty state:
+Sender Account
+Recipient Name
+Recipient Account Number
+Amount
+Confirmation checkbox)
 
 Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
 Steps:
 1. Select Make a Transfer option on the Dashboard
-2. Choose account (from pre-conditions) with balance > 0
-3. Fill Amount field with INvalid amount
-4. Fill all the rest fields with Valid value
-5. Check checkbox "Confirm details are correct"
-6. Click [Send Transfer]
-
-Expected result:
-1. Error: Invalid transfer: insufficient funds or invalid accounts
-2. Check Select Account drop-down: both accounts balance were NOT updated
-3. Check via API that both account balance were NOT updated with transferred amount
-
------TEST 4: Error message is displayed if Account is not selected
-
-Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-Steps:
-1. Select Make a Transfer option on the Dashboard
-2. Do not choose any account
+2. Leave <parameter: one of the required field> empty
 3. Fill all the rest fields with Valid value
 4. Check checkbox "Confirm details are correct"
 5. Click [Send Transfer]
@@ -146,67 +136,7 @@ Expected result:
 2. Check Accounts drop-down: accounts balance weren't updated
 3. Check via API that accounts balance weren't updated
 
------TEST 5: Error message is displayed if Recipient Name is empty
-
-Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-Steps:
-1. Select Make a Transfer option on the Dashboard
-2. Leave Recipient Name empty
-3. Fill all the rest fields with Valid value
-4. Check checkbox "Confirm details are correct"
-5. Click [Send Transfer]
-
-Expected result:
-1. Error: The recipient name does not match the registered name.
-2. Check Accounts drop-down: accounts balance weren't updated
-3. Check via API that accounts balance weren't updated
-
------TEST 6: Error message is displayed if Recipient Account Number is empty
-
-Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-Steps:
-1. Select Make a Transfer option on the Dashboard
-2. Leave Recipient Account Number empty
-3. Fill all the rest fields with Valid value
-4. Check checkbox "Confirm details are correct"
-5. Click [Send Transfer]
-
-Expected result:
-1. Error: Please fill all fields and confirm.
-2. Check Accounts drop-down: accounts balance weren't updated
-3. Check via API that accounts balance weren't updated
-
------TEST 7: Error message is displayed if Amount is empty
-
-Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-Steps:
-1. Select Make a Transfer option on the Dashboard
-2. Leave Amount empty
-3. Fill all the rest fields with Valid value
-4. Check checkbox "Confirm details are correct"
-5. Click [Send Transfer]
-
-Expected result:
-1. Error: Please fill all fields and confirm.
-2. Check Accounts drop-down: accounts balance weren't updated
-3. Check via API that accounts balance weren't updated
-
------TEST 8: Error message is displayed if Confirmation Checkbox is unchecked
-
-Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-Steps:
-1. Select Make a Transfer option on the Dashboard
-2. Leave Confirmation Checkbox unchecked
-3. Fill all the rest fields with Valid value
-4. Check checkbox "Confirm details are correct"
-5. Click [Send Transfer]
-
-Expected result:
-1. Error: Please fill all fields and confirm.
-2. Check Accounts drop-down: accounts balance weren't updated
-3. Check via API that accounts balance weren't updated
-
------TEST 9: User can repeat the transfer
+-----TEST 4: User can repeat the transfer
 
 Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0. Valid Transfer between accounts was made
 Steps:
@@ -220,7 +150,7 @@ Expected result:
 1. Transfer of <transaction amount> successful from Account <selected account ID> to <recipient account ID>!
 2. Check via API that both accounts balance was updated with transferred amount
 
------TEST 10: [Send Transfer] button is disabled if Account is not selected
+-----TEST 5: [Send Transfer] button is disabled if Account is not selected
 
 Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0. Valid Transfer between accounts was made
 Steps:
@@ -231,7 +161,7 @@ Steps:
 Expected result:
 1. [Send Transfer] is disabled
 
------TEST 11: [Send Transfer] button is disabled if "Confirm details are correct" is unchecked
+-----TEST 6: [Send Transfer] button is disabled if "Confirm details are correct" is unchecked
 
 Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0. Valid Transfer between accounts was made
 Steps:
