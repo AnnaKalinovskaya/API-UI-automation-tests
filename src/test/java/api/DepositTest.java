@@ -1,17 +1,17 @@
 package api;
 
-import models.BankAccountModel;
-import models.DepositRequestModel;
+import api.models.BankAccountModel;
+import api.models.DepositRequestModel;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import skelethon.requests.CrudRequester;
-import skelethon.requests.Endpoint;
-import skelethon.requests.ValidatableCrudRequester;
-import specs.RequestSpecs;
-import specs.ResponseSpecs;
+import api.skelethon.requests.CrudRequester;
+import api.skelethon.requests.Endpoint;
+import api.skelethon.requests.ValidatableCrudRequester;
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

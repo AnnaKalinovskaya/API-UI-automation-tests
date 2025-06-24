@@ -1,18 +1,18 @@
 package api;
 
-import generators.RandomDataGenerator;
-import models.CustomerNameRequestModel;
-import models.CustomerNameResponseModel;
-import models.UserProfileModel;
+import api.generators.RandomDataGenerator;
+import api.models.CustomerNameRequestModel;
+import api.models.CustomerNameResponseModel;
+import api.models.UserProfileModel;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import skelethon.requests.CrudRequester;
-import skelethon.requests.Endpoint;
-import skelethon.requests.ValidatableCrudRequester;
-import specs.RequestSpecs;
-import specs.ResponseSpecs;
+import api.skelethon.requests.CrudRequester;
+import api.skelethon.requests.Endpoint;
+import api.skelethon.requests.ValidatableCrudRequester;
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 import java.util.stream.Stream;
 
 public class UpdateNameTest extends BaseTest{
