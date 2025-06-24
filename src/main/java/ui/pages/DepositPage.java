@@ -11,7 +11,7 @@ public class DepositPage extends DashboardBase<DepositPage> {
 
     private final ElementsCollection accountsOptions = $$(Selectors.byXpath("//select[contains(@class, 'account-selector')]/option"));
     private final SelenideElement amountField = $(Selectors.byClassName("deposit-input"));
-    private final SelenideElement depositButton = $(Selectors.byXpath("//button[contains(text(), 'Deposit')]")); //todo: adjust paths by attributes instead of Xpath where possible
+    private final SelenideElement depositButton = $(Selectors.byXpath("//button[contains(text(), 'Deposit')]"));
 
     public String url(){
         return "/deposit";
