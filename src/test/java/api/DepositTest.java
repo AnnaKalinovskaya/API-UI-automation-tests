@@ -1,3 +1,5 @@
+package api;
+
 import models.BankAccountModel;
 import models.DepositRequestModel;
 import org.junit.jupiter.api.BeforeAll;
