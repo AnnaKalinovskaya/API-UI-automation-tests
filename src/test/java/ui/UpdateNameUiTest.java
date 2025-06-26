@@ -44,7 +44,7 @@ public class UpdateNameUiTest extends BaseUiTest {
                 .goToUserInfo()
                 .enterNewName(invalidValue)
                 .saveChanges()
-                .checkAlertAndAccept(BankAlert.NAME_UPDATED_SUCCESSFULLY.getMessage());
+                .checkAlertAndAccept(BankAlert.NAME_MUST_CONTAIN.getMessage());
 
         assertThat(editProfilePage.getName()).isEqualTo(initialName);
 
