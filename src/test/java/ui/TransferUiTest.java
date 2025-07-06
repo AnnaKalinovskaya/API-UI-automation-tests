@@ -2,13 +2,14 @@ package ui;
 
 import api.generators.RandomDataGenerator;
 import api.models.TransactionType;
+import com.codeborne.selenide.Selenide;
+import common.Utils;
 import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
 import ui.pages.TransferPage;
 import api.skelethon.steps.UserSteps;
 import java.math.BigDecimal;
-import static com.codeborne.selenide.Selenide.switchTo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TransferUiTest extends BaseUiTest {
@@ -34,7 +35,7 @@ public class TransferUiTest extends BaseUiTest {
                 .clickConfirm()
                 .cickSendTransfer()
                 .checkAlertAndAccept(String.format("Successfully transferred $%s to account %s!",
-                        validAmount, receiverBankAccount.getAccountNumber()));
+                        Utils.formatNumber(validAmount), receiverBankAccount.getAccountNumber()));
 
         //Check 'Select Account' drop-down: sender balance was reduced
         // and receiver balance was increased with transferred amount.
@@ -42,6 +43,7 @@ public class TransferUiTest extends BaseUiTest {
         var expectedSenderBalance = initialSenderBalance.subtract(validAmount);
         var expectedReceiverBalance = initialReceiverBalance.add(validAmount);
 
+        Selenide.refresh();
         assertThat(transferPage.getBankAccountText(senderBankAccount.getAccountNumber()))
                 .contains(String.valueOf(expectedSenderBalance));
         assertThat(transferPage.getBankAccountText(receiverBankAccount.getAccountNumber()))
@@ -109,21 +111,28 @@ public class TransferUiTest extends BaseUiTest {
                 .enterAmount(validAmount.doubleValue())
                 .clickConfirm()
                 .cickSendTransfer()
-                .checkAlertAndAccept(BankAlert.FILL_ALL_FIELDS.getMessage());
+                .checkAlertAndAccept(String.format("Successfully transferred $%s to account %s!", Utils.formatNumber(validAmount), receiverBankAccount.getAccountNumber()));
 
-        //Check Accounts drop-down: accounts balance weren't updated
+
+        //Check 'Select Account' drop-down: sender balance was reduced
+        // and receiver balance was increased with transferred amount.
         var transferPage = new TransferPage();
-        assertThat(transferPage.getBankAccountText(senderBankAccount.getAccountNumber()))
-                .contains(String.valueOf(initialSenderBalance));
-        assertThat(transferPage.getBankAccountText(receiverBankAccount.getAccountNumber()))
-                .contains(String.valueOf(initialReceiverBalance));
+        var expectedSenderBalance = initialSenderBalance.subtract(validAmount);
+        var expectedReceiverBalance = initialReceiverBalance.add(validAmount);
 
-        //Check via API that accounts balance weren't updated
+        Selenide.refresh();
+        assertThat(transferPage.getBankAccountText(senderBankAccount.getAccountNumber()))
+                .contains(String.valueOf(expectedSenderBalance));
+        assertThat(transferPage.getBankAccountText(receiverBankAccount.getAccountNumber()))
+                .contains(String.valueOf(expectedReceiverBalance));
+
+        //Check via API that sender balance was reduced and receiver balance was increased with transferred amount.
         var accountsApi = user.getAllBankAccounts();
         var senderBalanceApi = accountsApi.getAccount(senderBankAccount.getId()).getBalance();
         var receiverBalanceApi = accountsApi.getAccount(receiverBankAccount.getId()).getBalance();
-        assertThat(senderBalanceApi).isEqualTo(initialSenderBalance);
-        assertThat(receiverBalanceApi).isEqualTo(initialReceiverBalance);
+
+        assertThat(senderBalanceApi).isEqualTo(expectedSenderBalance);
+        assertThat(receiverBalanceApi).isEqualTo(expectedReceiverBalance);
     }
 
     @Test
@@ -299,7 +308,7 @@ public class TransferUiTest extends BaseUiTest {
                 .confirm()
                 .clickSendTransfer()
                         .checkAlertAndAccept(String.format("Transfer of $%s successful from Account %s to %s!",
-                                randomTransferAmount, senderBankAccount.getId(), receiverBankAccount.getId()));
+                                Utils.formatNumber(randomTransferAmount), senderBankAccount.getId(), receiverBankAccount.getId()));
 
         //Check via API that sender balance was reduced and receiver balance was increased with transferred amount.
         var allAccountsAfterRepeat = user.getAllBankAccounts();

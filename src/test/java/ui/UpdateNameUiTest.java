@@ -1,5 +1,6 @@
 package ui;
 
+import com.codeborne.selenide.Selenide;
 import common.storage.SessionStorage;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -22,7 +23,7 @@ public class UpdateNameUiTest extends BaseUiTest {
                 .saveChanges()
                 .checkAlertAndAccept(BankAlert.NAME_UPDATED_SUCCESSFULLY.getMessage());
 
-
+        Selenide.refresh();
         assertThat(editProfilePage.getName()).isEqualTo(validValue);
 
         editProfilePage.goHome();

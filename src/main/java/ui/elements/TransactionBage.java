@@ -16,10 +16,12 @@ public class TransactionBage extends BaseElement{
 
     public TransactionBage(SelenideElement element) {
         super(element);
-        amount = element.find(By.xpath("./span")).getText().split("\n")[2];
+        amount = element.find(By.xpath("./span"))
+                .getText()
+                .split("\n")[0].split("-")[1].trim();
         repeatButton = element.find(By.xpath("./button"));
 
-        var stringType = element.find(By.xpath("./span")).getText().split("\n")[0].trim();
+        var stringType = element.find(By.xpath("./span")).getText().split("\n")[0].split("-")[0].trim();
         switch(stringType){
             case "DEPOSIT":
                 type = TransactionType.DEPOSIT;

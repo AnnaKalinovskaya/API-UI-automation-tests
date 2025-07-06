@@ -2,7 +2,7 @@ package ui;
 
 import com.codeborne.selenide.SelenideElement;
 import api.generators.RandomDataGenerator;
-import common.annotations.Browsers;
+import common.Utils;
 import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
@@ -28,7 +28,7 @@ public class DepositUiTest extends BaseUiTest {
                 .selectAccount(bankAccount.getAccountNumber())
                 .enterAmount(validAmount.doubleValue())
                 .clickDeposit()
-                .checkAlertAndAccept(String.format("Successfully deposited $%s to account %s!", validAmount, bankAccount.getAccountNumber()));
+                .checkAlertAndAccept(String.format("Successfully deposited $%s to account %s!", Utils.formatNumber(validAmount), bankAccount.getAccountNumber()));
 
         //Check 'Select Account' drop-down: Account balance should be updated with deposited amount.
         String accountInDropDrown = new UserDashboard().goToDeposit().getAccountOptions()
