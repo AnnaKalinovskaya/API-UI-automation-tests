@@ -2,6 +2,8 @@ package ui;
 
 import com.codeborne.selenide.SelenideElement;
 import api.generators.RandomDataGenerator;
+import common.annotations.Browsers;
+import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
 import ui.pages.DepositPage;
@@ -15,7 +17,7 @@ public class DepositUiTest extends BaseUiTest {
     @Test
     public void depositValidAmount(){
         //Pre-conditions: User is created and logged in, at least 1 bank account was created
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal validAmount = RandomDataGenerator.getRandomDepositAmount();
         var bankAccount = user.createBankAccount();
         BigDecimal initialBalance = bankAccount.getBalance();
@@ -44,7 +46,7 @@ public class DepositUiTest extends BaseUiTest {
     @Test
     public void errorWhenDepositInvalidAmount(){
         //Pre-conditions: User is created and logged in, at least 1 bank account was created
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal invalidAmount = RandomDataGenerator.getRandomAmount(5000, 10000);
         var bankAccount = user.createBankAccount();
         BigDecimal initialBalance = bankAccount.getBalance();
@@ -72,7 +74,7 @@ public class DepositUiTest extends BaseUiTest {
     @Test
     public void errorWhenAccountNotSelected(){
         //Pre-conditions: User is created and logged in, at least 1 bank account was created
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal validAmount = RandomDataGenerator.getRandomDepositAmount();
         user.createBankAccount();
         var accountsApi = user.getAllBankAccounts();
@@ -101,7 +103,7 @@ public class DepositUiTest extends BaseUiTest {
     @Test
     public void errorWhenAmountFieldIsEmpty(){
         //Pre-conditions: User is created and logged in, at least 1 bank account was created
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         var bankAccount = user.createBankAccount();
         var accountsApi = user.getAllBankAccounts();
 

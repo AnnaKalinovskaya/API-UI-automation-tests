@@ -4,12 +4,14 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
 import lombok.Getter;
+import ui.elements.TransactionBage;
+
+import java.util.List;
 
 import static com.codeborne.selenide.Selenide.$$;
 
 public class TransactionsPage extends DashboardBase<TransactionsPage> {
 
-    @Getter
     private ElementsCollection transactions = $$(Selectors.byXpath("//li[contains(@class, 'list-group-item')]"));
     private RepeatTransferModal transferModal;
 
@@ -17,10 +19,14 @@ public class TransactionsPage extends DashboardBase<TransactionsPage> {
         return "/transfer";
     }
 
-    public RepeatTransferModal repeatTransaction(SelenideElement transaction){
-        transaction.$(Selectors.byXpath("./button[contains(text(), 'Repeat')]")).click();
+    public RepeatTransferModal repeatTransaction(TransactionBage transaction){
+        transaction.getRepeatButton().click();
         transferModal = new RepeatTransferModal();
         return transferModal;
+    }
+
+    public List<TransactionBage> getTransactions (){
+        return generateBaseElements(transactions, TransactionBage::new);
     }
 
 }

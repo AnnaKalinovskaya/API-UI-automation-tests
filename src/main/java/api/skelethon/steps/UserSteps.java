@@ -11,6 +11,7 @@ import lombok.Getter;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.*;
 
 public class UserSteps {
@@ -19,7 +20,20 @@ public class UserSteps {
     private String name;
     @Getter
     private String pass;
-    private final BigDecimal MAX_DEPOSIT = new BigDecimal(5000);
+    public static final BigDecimal MAX_DEPOSIT = new BigDecimal(5000);
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        UserSteps userSteps = (UserSteps) o;
+        return Objects.equals(name, userSteps.name) && Objects.equals(pass, userSteps.pass);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, pass);
+    }
 
     public UserSteps(String name, String pass){
         this.name = name;

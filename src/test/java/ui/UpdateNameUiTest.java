@@ -1,5 +1,6 @@
 package ui;
 
+import common.storage.SessionStorage;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import ui.pages.BankAlert;
@@ -13,7 +14,7 @@ public class UpdateNameUiTest extends BaseUiTest {
     @ParameterizedTest
     @ValueSource(strings = {"Random Name"})
     public void userEditNameWithValidValue(String validValue){
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
 
         EditProfilePage editProfilePage = openUserDashboard(user.getName(), user.getPass())
                 .goToUserInfo()
@@ -37,7 +38,7 @@ public class UpdateNameUiTest extends BaseUiTest {
     @ParameterizedTest
     @ValueSource(strings = {"Random"})
     public void userEditNameWithInvalidValue(String invalidValue){
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         String initialName = openUserDashboard(user.getName(), user.getPass()).getName();
 
         EditProfilePage editProfilePage = new UserDashboard()
