@@ -1,18 +1,18 @@
 package api;
 
-import generators.RandomDataGenerator;
-import models.*;
+import api.generators.RandomDataGenerator;
+import api.models.UserProfileModel;
 import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import skelethon.requests.Endpoint;
-import skelethon.requests.ValidatableCrudRequester;
-import skelethon.steps.AdminSteps;
-import skelethon.steps.UserSteps;
-import specs.RequestSpecs;
-import specs.ResponseSpecs;
+import api.skelethon.requests.Endpoint;
+import api.skelethon.requests.ValidatableCrudRequester;
+import api.skelethon.steps.AdminSteps;
+import api.skelethon.steps.UserSteps;
+import api.specs.RequestSpecs;
+import api.specs.ResponseSpecs;
 
 public class BaseTest {
 
