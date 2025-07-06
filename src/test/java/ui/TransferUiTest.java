@@ -1,6 +1,8 @@
 package ui;
 
 import api.generators.RandomDataGenerator;
+import api.models.TransactionType;
+import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
 import ui.pages.BankAlert;
 import ui.pages.TransferPage;
@@ -16,7 +18,7 @@ public class TransferUiTest extends BaseUiTest {
     public void transferValidAmount(){
         //Pre-conditions: User is created and logged in, at least 2 bank account were created,
         // one of them with balance > 0
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         var validAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(validAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -57,7 +59,7 @@ public class TransferUiTest extends BaseUiTest {
     @Test
     public void errorWhenTransferInvalidAmount(){
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         var senderBankAccount = user.createAccountWithBalance(RandomDataGenerator.getRandomDepositAmount());
         var receiverBankAccount = user.createBankAccount();
         var initialSenderBalance = senderBankAccount.getBalance();
@@ -92,7 +94,7 @@ public class TransferUiTest extends BaseUiTest {
     @Test
     public void errorWhenRecipientNameEmpty(){
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         var validAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(validAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -127,7 +129,7 @@ public class TransferUiTest extends BaseUiTest {
     @Test
     public void errorWhenSenderAccountEmpty() {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -161,7 +163,7 @@ public class TransferUiTest extends BaseUiTest {
     @Test
     public void errorWhenRecipientAccountEmpty() {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -195,7 +197,7 @@ public class TransferUiTest extends BaseUiTest {
     @Test
     public void errorWhenAmountEmpty() {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -229,7 +231,7 @@ public class TransferUiTest extends BaseUiTest {
     @Test
     public void errorWhenNoConfirmation() {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -264,7 +266,7 @@ public class TransferUiTest extends BaseUiTest {
     public void userCanRepeatTransfer(){
         //Pre-conditions: User is created and logged in, at least 2 bank account were created,
         // one of them with balance > 0. Valid Transfer between accounts was made.
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -282,7 +284,7 @@ public class TransferUiTest extends BaseUiTest {
                 .clickTransferAgain();
 
         var transactionToRepeat = transactionsPage.getTransactions().stream()
-                .filter(t -> t.getText().contains("OUT") && t.getText().contains(String.valueOf(randomTransferAmount)))
+                .filter(t -> t.getType().equals(TransactionType.TRANSFER_OUT) && t.getAmount().contains(String.valueOf(randomTransferAmount)))
                 .findFirst().get();
 
         var transactionModel = transactionsPage.repeatTransaction(transactionToRepeat);
@@ -311,7 +313,7 @@ public class TransferUiTest extends BaseUiTest {
     public void sendTransferButtonDisabledWhenAccountNotSelected(){
         //Pre-conditions: User is created and logged in, at least 2 bank account were created,
         // one of them with balance > 0. Valid Transfer between accounts was made
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -325,7 +327,7 @@ public class TransferUiTest extends BaseUiTest {
                 .clickTransferAgain();
 
         var transactionToRepeat = transactionsPage.getTransactions().stream()
-                .filter(t -> t.getText().contains("OUT") && t.getText().contains(String.valueOf(randomTransferAmount)))
+                .filter(t -> t.getType().equals(TransactionType.TRANSFER_OUT) && t.getAmount().contains(String.valueOf(randomTransferAmount)))
                 .findFirst().get();
 
         var transactionModel = transactionsPage
@@ -339,7 +341,7 @@ public class TransferUiTest extends BaseUiTest {
     public void sendTransferButtonDisabledWhenNotConfirmed(){
         //Pre-conditions: User is created and logged in, at least 2 bank account were created,
         // one of them with balance > 0. Valid Transfer between accounts was made
-        UserSteps user = createRandomUser();
+        UserSteps user = SessionStorage.createRandomUser();
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
         var receiverBankAccount = user.createBankAccount();
@@ -353,7 +355,7 @@ public class TransferUiTest extends BaseUiTest {
                 .clickTransferAgain();
 
         var transactionToRepeat = transactionsPage.getTransactions().stream()
-                .filter(t -> t.getText().contains("OUT") && t.getText().contains(String.valueOf(randomTransferAmount)))
+                .filter(t -> t.getType().equals(TransactionType.TRANSFER_OUT) && t.getAmount().contains(String.valueOf(randomTransferAmount)))
                 .findFirst().get();
 
         var transactionModel = transactionsPage
