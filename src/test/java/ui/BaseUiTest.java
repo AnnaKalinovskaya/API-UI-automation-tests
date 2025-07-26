@@ -1,8 +1,9 @@
 package ui;
+import api.BaseTest;
 import api.config.Config;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
-import common.extentions.BrowserMatchExtension;
+import testextensions.extentions.BrowserMatchExtension;
 import common.storage.SessionStorage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -14,7 +15,7 @@ import java.util.Map;
 import static com.codeborne.selenide.Selenide.executeJavaScript;
 
 @ExtendWith(BrowserMatchExtension.class)
-public class BaseUiTest {
+public class BaseUiTest extends BaseTest {
 
     @BeforeAll
     public static void setupSelenoid() {
@@ -28,7 +29,7 @@ public class BaseUiTest {
         );
     }
 
-    protected UserDashboard openUserDashboard(String userName, String pass){
+    public static UserDashboard openUserDashboard(String userName, String pass){
         Selenide.open("/");
         String userAuthHeader = RequestSpecs.getUserAuthToken(userName, pass);
         executeJavaScript("localStorage.setItem('authToken', arguments[0]);", userAuthHeader);

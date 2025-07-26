@@ -4,6 +4,7 @@ import com.codeborne.selenide.Selenide;
 import common.storage.SessionStorage;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import testextensions.annotations.UserSession;
 import ui.pages.BankAlert;
 import ui.pages.EditProfilePage;
 import ui.pages.UserDashboard;
@@ -13,9 +14,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UpdateNameUiTest extends BaseUiTest {
 
     @ParameterizedTest
+    @UserSession
     @ValueSource(strings = {"Random Name"})
     public void userEditNameWithValidValue(String validValue){
-        UserSteps user = SessionStorage.createRandomUser();
 
         EditProfilePage editProfilePage = openUserDashboard(user.getName(), user.getPass())
                 .goToUserInfo()
@@ -37,9 +38,9 @@ public class UpdateNameUiTest extends BaseUiTest {
     }
 
     @ParameterizedTest
+    @UserSession
     @ValueSource(strings = {"Random"})
     public void userEditNameWithInvalidValue(String invalidValue){
-        UserSteps user = SessionStorage.createRandomUser();
         String initialName = openUserDashboard(user.getName(), user.getPass()).getName();
 
         EditProfilePage editProfilePage = new UserDashboard()

@@ -8,11 +8,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import api.skelethon.steps.UserSteps;
 
-
 public class BaseTest {
 
     protected SoftAssertions softly;
-    protected static UserSteps user;
+    public static UserSteps user;
 
     @BeforeAll
     public static void createUser(){

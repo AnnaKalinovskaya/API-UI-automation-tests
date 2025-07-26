@@ -1,10 +1,10 @@
-package common.extentions;
+package testextensions.extentions;
 
 import com.codeborne.selenide.Configuration;
-import common.annotations.Browsers;
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import testextensions.annotations.Browsers;
 
 import java.util.Arrays;
 
