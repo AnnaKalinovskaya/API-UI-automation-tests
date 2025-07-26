@@ -79,8 +79,8 @@ Thread ForkJoinPool-1-worker-13 | Total Duration: 35624 ms
 
 Non-parallel run time: 184940 ms or 03:11 min
 
-Parallel run time:
-time 70364 ms
-Mvn test time  106857 ms
+Parallel run time headless mode:
+test time:  87624 ms
+mvn time:  01:34 min
 
 
