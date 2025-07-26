@@ -2,7 +2,12 @@ package ui;
 
 import com.codeborne.selenide.SelenideElement;
 import api.generators.RandomDataGenerator;
+import common.Utils;
+import testextensions.annotations.UserSession;
+import testextensions.extentions.UserSessionExtension;
+import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import ui.pages.BankAlert;
 import ui.pages.DepositPage;
 import ui.pages.UserDashboard;
@@ -10,12 +15,13 @@ import api.skelethon.steps.UserSteps;
 import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 
+
 public class DepositUiTest extends BaseUiTest {
 
     @Test
+    @UserSession
     public void depositValidAmount(){
         //Pre-conditions: User is created and logged in, at least 1 bank account was created
-        UserSteps user = createRandomUser();
         BigDecimal validAmount = RandomDataGenerator.getRandomDepositAmount();
         var bankAccount = user.createBankAccount();
         BigDecimal initialBalance = bankAccount.getBalance();
@@ -26,7 +32,7 @@ public class DepositUiTest extends BaseUiTest {
                 .selectAccount(bankAccount.getAccountNumber())
                 .enterAmount(validAmount.doubleValue())
                 .clickDeposit()
-                .checkAlertAndAccept(String.format("Successfully deposited $%s to account %s!", validAmount, bankAccount.getAccountNumber()));
+                .checkAlertAndAccept(String.format("Successfully deposited $%s to account %s!", Utils.formatNumber(validAmount), bankAccount.getAccountNumber()));
 
         //Check 'Select Account' drop-down: Account balance should be updated with deposited amount.
         String accountInDropDrown = new UserDashboard().goToDeposit().getAccountOptions()
@@ -44,7 +50,6 @@ public class DepositUiTest extends BaseUiTest {
     @Test
     public void errorWhenDepositInvalidAmount(){
         //Pre-conditions: User is created and logged in, at least 1 bank account was created
-        UserSteps user = createRandomUser();
         BigDecimal invalidAmount = RandomDataGenerator.getRandomAmount(5000, 10000);
         var bankAccount = user.createBankAccount();
         BigDecimal initialBalance = bankAccount.getBalance();
@@ -72,7 +77,6 @@ public class DepositUiTest extends BaseUiTest {
     @Test
     public void errorWhenAccountNotSelected(){
         //Pre-conditions: User is created and logged in, at least 1 bank account was created
-        UserSteps user = createRandomUser();
         BigDecimal validAmount = RandomDataGenerator.getRandomDepositAmount();
         user.createBankAccount();
         var accountsApi = user.getAllBankAccounts();
@@ -101,7 +105,6 @@ public class DepositUiTest extends BaseUiTest {
     @Test
     public void errorWhenAmountFieldIsEmpty(){
         //Pre-conditions: User is created and logged in, at least 1 bank account was created
-        UserSteps user = createRandomUser();
         var bankAccount = user.createBankAccount();
         var accountsApi = user.getAllBankAccounts();
 

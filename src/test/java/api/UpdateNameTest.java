@@ -4,6 +4,7 @@ import api.generators.RandomDataGenerator;
 import api.models.CustomerNameRequestModel;
 import api.models.CustomerNameResponseModel;
 import api.models.UserProfileModel;
+import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -21,6 +22,8 @@ public class UpdateNameTest extends BaseTest{
     @ParameterizedTest
     @MethodSource("validNameValue")
     public void userCanUpdateNameWithValidValue(String validName){
+        UserProfileModel userProfileBeforeChange = SessionStorage.getUserStep().getCustomerProfile();
+
         CustomerNameResponseModel responseBody = new CrudRequester<CustomerNameResponseModel>(
                 RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
                 Endpoint.UPDATE_CUSTOMER_PROFILE,
@@ -30,7 +33,7 @@ public class UpdateNameTest extends BaseTest{
                 .isEqualTo("Profile updated successfully");
         softly.assertThat(responseBody.getCustomer())
                 .withFailMessage("User ID/name/role from request do not match to response user info")
-                .isEqualTo(userProfile);
+                .isEqualTo(userProfileBeforeChange);
         softly.assertThat(responseBody.getCustomer().getName())
                 .withFailMessage("Updated customer name: " + responseBody.getCustomer().getName())
                 .isEqualTo(validName);
@@ -64,6 +67,7 @@ public class UpdateNameTest extends BaseTest{
                 Endpoint.UPDATE_CUSTOMER_PROFILE,
                 ResponseSpecs.returns200()).put(new CustomerNameRequestModel(customerName));
 
+        UserProfileModel userProfileBeforeChange = SessionStorage.getUserStep().getCustomerProfile();
         //update name with the value which is already set
         CustomerNameResponseModel responseBody = new CrudRequester<CustomerNameResponseModel>(
                 RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
@@ -74,7 +78,7 @@ public class UpdateNameTest extends BaseTest{
                 .isEqualTo("Profile updated successfully");
         softly.assertThat(responseBody.getCustomer())
                 .withFailMessage("User ID/name/role from request do not match to response user info")
-                .isEqualTo(userProfile);
+                .isEqualTo(userProfileBeforeChange);
         softly.assertThat(responseBody.getCustomer().getName())
                 .withFailMessage("Updated customer name: " + responseBody.getCustomer().getName())
                 .isEqualTo(customerName);
@@ -95,7 +99,7 @@ public class UpdateNameTest extends BaseTest{
     @ParameterizedTest
     @MethodSource("inValidNameValue")
     public void userCanNotUpdateNameWithInvalidValue(String inValidName){
-        String initialName = userProfile.getName();
+        String initialName = SessionStorage.getUserStep().getCustomerProfile().getName();
 
         new ValidatableCrudRequester(
                 RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),

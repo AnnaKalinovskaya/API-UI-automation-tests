@@ -12,6 +12,7 @@ import api.skelethon.requests.Endpoint;
 import api.skelethon.requests.ValidatableCrudRequester;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import testextensions.annotations.UserSession;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
