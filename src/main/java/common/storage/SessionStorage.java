@@ -14,7 +14,7 @@ import java.util.List;
 
 public class SessionStorage {
 
-    private static final SessionStorage INSTANCE = new SessionStorage();
+    private static final ThreadLocal<SessionStorage> INSTANCE = ThreadLocal.withInitial(SessionStorage::new);
 
     private final LinkedHashMap<UserProfileModel, UserSteps> users = new LinkedHashMap<>();
 
@@ -23,21 +23,21 @@ public class SessionStorage {
     public static UserSteps createRandomUser(){
         UserSteps user = new UserSteps(RandomDataGenerator.getRandomUserName(), RandomDataGenerator.getRandomPass());
         UserProfileModel userProfile = AdminSteps.createUser(user.getName(), user.getPass());
-        INSTANCE.users.put(userProfile, user);
+        INSTANCE.get().users.put(userProfile, user);
         return user;
     }
 
     public static UserSteps getUserStep(){
-        UserProfileModel userProfile = INSTANCE.users.keySet().stream().toList().get(0);
-        return INSTANCE.users.get(userProfile);
+        UserProfileModel userProfile = INSTANCE.get().users.keySet().stream().toList().get(0);
+        return INSTANCE.get().users.get(userProfile);
     }
 
     public static void clear(){
-        List<UserProfileModel> createdUsers = INSTANCE.users.keySet().stream().toList();
+        List<UserProfileModel> createdUsers = INSTANCE.get().users.keySet().stream().toList();
         for (UserProfileModel user : createdUsers) {
             new ValidatableCrudRequester(RequestSpecs.adminSpec(), Endpoint.USERS, ResponseSpecs.returns200())
                     .delete(user.getId());
         }
-        INSTANCE.users.clear();
+        INSTANCE.get().users.clear();
     }
 }

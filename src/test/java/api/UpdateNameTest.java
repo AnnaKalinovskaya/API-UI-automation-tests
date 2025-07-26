@@ -14,15 +14,18 @@ import api.skelethon.requests.Endpoint;
 import api.skelethon.requests.ValidatableCrudRequester;
 import api.specs.RequestSpecs;
 import api.specs.ResponseSpecs;
+import testextensions.annotations.UserSession;
+
 import java.util.stream.Stream;
 
 public class UpdateNameTest extends BaseTest{
 
 
     @ParameterizedTest
+    @UserSession
     @MethodSource("validNameValue")
     public void userCanUpdateNameWithValidValue(String validName){
-        UserProfileModel userProfileBeforeChange = SessionStorage.getUserStep().getCustomerProfile();
+        UserProfileModel userProfileBeforeChange = user.getCustomerProfile();
 
         CustomerNameResponseModel responseBody = new CrudRequester<CustomerNameResponseModel>(
                 RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),
@@ -60,6 +63,7 @@ public class UpdateNameTest extends BaseTest{
     }
 
     @Test
+    @UserSession
     public void userCanUpdateNameWithAlreadySetName(){
         //set Customer name as pre-condition
         String customerName = "Customer name";
@@ -97,9 +101,10 @@ public class UpdateNameTest extends BaseTest{
     }
 
     @ParameterizedTest
+    @UserSession
     @MethodSource("inValidNameValue")
     public void userCanNotUpdateNameWithInvalidValue(String inValidName){
-        String initialName = SessionStorage.getUserStep().getCustomerProfile().getName();
+        String initialName = user.getCustomerProfile().getName();
 
         new ValidatableCrudRequester(
                 RequestSpecs.authAsUserSpec(user.getName(), user.getPass()),

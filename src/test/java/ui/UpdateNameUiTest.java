@@ -1,14 +1,12 @@
 package ui;
 
 import com.codeborne.selenide.Selenide;
-import common.storage.SessionStorage;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import testextensions.annotations.UserSession;
 import ui.pages.BankAlert;
 import ui.pages.EditProfilePage;
 import ui.pages.UserDashboard;
-import api.skelethon.steps.UserSteps;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class UpdateNameUiTest extends BaseUiTest {

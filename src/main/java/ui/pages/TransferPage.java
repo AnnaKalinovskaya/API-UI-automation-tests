@@ -26,8 +26,10 @@ public class TransferPage extends DashboardBase<TransferPage>{
         return "/transfer";
     }
 
-    public TransferPage selectSenderAccount(String accountName){
+    public TransferPage selectSenderAccount(String accountName) throws InterruptedException {
+        Thread.sleep(3000);
         senderAccountDropDown.get(0).click();
+        Thread.sleep(2000);
         senderAccountDropDown.stream()
                 .filter(option -> option.getText().contains(accountName))
                 .findFirst().get().click();
@@ -59,7 +61,8 @@ public class TransferPage extends DashboardBase<TransferPage>{
         return this;
     }
 
-    public String getBankAccountText(String accountNumber){
+    public String getBankAccountText(String accountNumber) throws InterruptedException {
+        Thread.sleep(2000);
         return senderAccountDropDown
                 .stream().filter(option -> option.getText().contains(accountNumber))
                 .findFirst().get().getText();

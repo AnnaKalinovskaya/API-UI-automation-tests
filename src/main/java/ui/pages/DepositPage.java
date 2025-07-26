@@ -4,6 +4,7 @@ import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.Selectors;
 import com.codeborne.selenide.SelenideElement;
 
+import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$;
 import static com.codeborne.selenide.Selenide.$$;
 
@@ -17,14 +18,19 @@ public class DepositPage extends DashboardBase<DepositPage> {
         return "/deposit";
     }
 
-    public DepositPage selectAccount (String accountName){
+    public DepositPage selectAccount (String accountName) throws InterruptedException {
+        Thread.sleep(5000);
         accountsOptions.stream()
                 .filter(option -> option.getText().contains(accountName))
-                .findFirst().get().click();
+                .findFirst().ifPresentOrElse(
+                        SelenideElement::click,
+                        () ->{ throw new RuntimeException("Account not found: " + accountName); }
+        );
         return this;
     }
 
-    public ElementsCollection getAccountOptions(){
+    public ElementsCollection getAccountOptions() throws InterruptedException {
+        Thread.sleep(5000);
         return accountsOptions;
     }
 

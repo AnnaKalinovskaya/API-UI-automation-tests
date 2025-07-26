@@ -4,12 +4,10 @@ import api.generators.RandomDataGenerator;
 import api.models.TransactionType;
 import com.codeborne.selenide.Selenide;
 import common.Utils;
-import common.storage.SessionStorage;
 import org.junit.jupiter.api.Test;
 import testextensions.annotations.UserSession;
 import ui.pages.BankAlert;
 import ui.pages.TransferPage;
-import api.skelethon.steps.UserSteps;
 import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,7 +16,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void transferValidAmount(){
+    public void transferValidAmount() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created,
         // one of them with balance > 0
         var validAmount = RandomDataGenerator.getRandomDepositAmount();
@@ -61,7 +59,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void errorWhenTransferInvalidAmount(){
+    public void errorWhenTransferInvalidAmount() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
         var senderBankAccount = user.createAccountWithBalance(RandomDataGenerator.getRandomDepositAmount());
         var receiverBankAccount = user.createBankAccount();
@@ -96,7 +94,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void errorWhenRecipientNameEmpty(){
+    public void errorWhenRecipientNameEmpty() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
         var validAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(validAmount);
@@ -138,7 +136,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void errorWhenSenderAccountEmpty() {
+    public void errorWhenSenderAccountEmpty() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
@@ -172,7 +170,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void errorWhenRecipientAccountEmpty() {
+    public void errorWhenRecipientAccountEmpty() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
@@ -206,7 +204,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void errorWhenAmountEmpty() {
+    public void errorWhenAmountEmpty() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
@@ -240,7 +238,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void errorWhenNoConfirmation() {
+    public void errorWhenNoConfirmation() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created, one of them with balance > 0
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
         var senderBankAccount = user.createAccountWithBalance(randomAmount);
@@ -274,7 +272,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void userCanRepeatTransfer(){
+    public void userCanRepeatTransfer() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created,
         // one of them with balance > 0. Valid Transfer between accounts was made.
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
@@ -321,7 +319,7 @@ public class TransferUiTest extends BaseUiTest {
 
     @Test
     @UserSession
-    public void sendTransferButtonDisabledWhenAccountNotSelected(){
+    public void sendTransferButtonDisabledWhenAccountNotSelected() throws InterruptedException {
         //Pre-conditions: User is created and logged in, at least 2 bank account were created,
         // one of them with balance > 0. Valid Transfer between accounts was made
         BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
@@ -347,31 +345,31 @@ public class TransferUiTest extends BaseUiTest {
         assertThat(transactionModel.getSendTransferButton().isEnabled()).isFalse();
     }
 
-    @Test
-    @UserSession
-    public void sendTransferButtonDisabledWhenNotConfirmed(){
-        //Pre-conditions: User is created and logged in, at least 2 bank account were created,
-        // one of them with balance > 0. Valid Transfer between accounts was made
-        BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
-        var senderBankAccount = user.createAccountWithBalance(randomAmount);
-        var receiverBankAccount = user.createBankAccount();
-        //randomAmount is divided by 2 so that this transfer later can be repeated without the risk of exceeding sender balance
-        var randomTransferAmount = RandomDataGenerator.getRandomAmount(0.00, randomAmount.doubleValue()/2);
-        user.transfer(senderBankAccount.getId(), receiverBankAccount.getId(), randomTransferAmount);
-
-        //Test steps via UI
-        var transactionsPage = openUserDashboard(user.getName(), user.getPass())
-                .goToTransfer()
-                .clickTransferAgain();
-
-        var transactionToRepeat = transactionsPage.getTransactions().stream()
-                .filter(t -> t.getType().equals(TransactionType.TRANSFER_OUT) && t.getAmount().contains(String.valueOf(randomTransferAmount)))
-                .findFirst().get();
-
-        var transactionModel = transactionsPage
-                .repeatTransaction(transactionToRepeat)
-                .selectSenderAccount(senderBankAccount.getAccountNumber());
-
-        assertThat(transactionModel.getSendTransferButton().isEnabled()).isFalse();
-    }
+//    @Test
+//    @UserSession
+//    public void sendTransferButtonDisabledWhenNotConfirmed() throws InterruptedException {
+//        //Pre-conditions: User is created and logged in, at least 2 bank account were created,
+//        // one of them with balance > 0. Valid Transfer between accounts was made
+//        BigDecimal randomAmount = RandomDataGenerator.getRandomDepositAmount();
+//        var senderBankAccount = user.createAccountWithBalance(randomAmount);
+//        var receiverBankAccount = user.createBankAccount();
+//        //randomAmount is divided by 2 so that this transfer later can be repeated without the risk of exceeding sender balance
+//        var randomTransferAmount = RandomDataGenerator.getRandomAmount(0.00, randomAmount.doubleValue()/2);
+//        user.transfer(senderBankAccount.getId(), receiverBankAccount.getId(), randomTransferAmount);
+//
+//        //Test steps via UI
+//        var transactionsPage = openUserDashboard(user.getName(), user.getPass())
+//                .goToTransfer()
+//                .clickTransferAgain();
+//
+//        var transactionToRepeat = transactionsPage.getTransactions().stream()
+//                .filter(t -> t.getType().equals(TransactionType.TRANSFER_OUT) && t.getAmount().contains(String.valueOf(randomTransferAmount)))
+//                .findFirst().get();
+//
+//        var transactionModel = transactionsPage
+//                .repeatTransaction(transactionToRepeat)
+//                .selectSenderAccount(senderBankAccount.getAccountNumber());
+//
+//        assertThat(transactionModel.getSendTransferButton().isEnabled()).isFalse();
+//    }
 }

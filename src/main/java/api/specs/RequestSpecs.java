@@ -26,8 +26,8 @@ public class RequestSpecs {
         return new RequestSpecBuilder()
                 .setContentType(ContentType.JSON)
                 .setAccept(ContentType.JSON)
-                .addFilters(List.of(new RequestLoggingFilter(),
-                        new ResponseLoggingFilter()))
+//                .addFilters(List.of(new RequestLoggingFilter(),
+//                        new ResponseLoggingFilter()))
                 .setBaseUri(baseURI);
     }
 
@@ -47,7 +47,7 @@ public class RequestSpecs {
                 .build();
     }
 
-    public static String getUserAuthToken(String name, String pass){
+    public synchronized static String getUserAuthToken(String name, String pass){
         String userToken;
         if (!authTokens.containsKey(name)) {
             userToken = new ValidatableCrudRequester(RequestSpecs.unauthSpec(),

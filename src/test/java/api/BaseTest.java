@@ -7,7 +7,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import api.skelethon.steps.UserSteps;
+import org.junit.jupiter.api.extension.ExtendWith;
+import testextensions.extentions.TimingExtension;
 
+@ExtendWith(TimingExtension.class)
 public class BaseTest {
 
     protected SoftAssertions softly;

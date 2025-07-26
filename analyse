@@ -1,0 +1,86 @@
+Thread ForkJoinPool-1-worker-1
+Test 1: api.[1] 0.01 (3835 ms)
+Test 2: ui.[1] Random (20162 ms)
+Test 3: api.[3] 10000.0 (3512 ms)
+Test 4: api.[3] 10000.01 (4310 ms)
+Test 5: ui.transferValidAmount() (12888 ms)
+
+Thread ForkJoinPool-1-worker-2
+Test 1: api.depositToAccountConcurrently() (22272 ms)
+Test 2: api.[2] 9999.99 (2962 ms)
+Test 3: ui.errorWhenAmountEmpty() (45130 ms)
+
+Thread ForkJoinPool-1-worker-3
+Test 1: api.transferMoneyConcurrentlyWithSameAccounts() (58806 ms)
+
+Thread ForkJoinPool-1-worker-4
+Test 1: api.[2] mvYUnctHnwecLVbLKCNlAiopEjuEFXZRqJNCFfPGZvGMFVrEFocWxBDoJpOZXNvdhBkrWOsPQFqcIqUppOtIApHnWXDFwmDenhmzgIYFTdlIUPAjLGKjNzZqtNmSxtd RiHuBWUJLbRIChJtHtnfMunsCjbyAOyqjBXdzTjWzywQQzXNEjShCKXeGFNkGatAIcNWBwJtYfzBXqozqkuHlgxPYzNcnoiMhQfDaUXCNLdtfBGJKQOnavTsNlnWop (3388 ms)
+Test 2: api.[1] N n (913 ms)
+Test 3: api.[3] yMaDakqqcFLznKySCGndMGyArVShSWVmouhqJoRghWNAYOQQEFBTGPxuEOqnIBIrClFjZbFgfjRYIeZpwDElIByAFJaXTiPRikGHasRhEyOgWVrAEguUuYvpKJJsWNq zPOallLeXjkoDVwerTuQPDCoHTfHuCBodjDsdxdFjdEjOweJRgVQgAQQANdbGZnqPrsYTDomSQsGcrZrRkqBYxxKVLqKvelJfzWDjdILHhyxhrXOVulfAMwDPgeGQJT (944 ms)
+Test 4: api.userCanUpdateNameWithAlreadySetName() (2007 ms)
+Test 5: api.[1] I (1091 ms)
+Test 6: ui.[1] Random Name (32292 ms)
+
+Thread ForkJoinPool-1-worker-5
+Test 1: ui.errorWhenAccountNotSelected() (26485 ms)
+Test 2: ui.errorWhenAmountFieldIsEmpty() (30283 ms)
+
+Thread ForkJoinPool-1-worker-6
+Test 1: ui.errorWhenSenderAccountEmpty() (28685 ms)
+Test 2: ui.userCanRepeatTransfer() (39786 ms)
+
+Thread ForkJoinPool-1-worker-7
+Test 1: api.[1] 0.01 (1711 ms)
+Test 2: api.[3] 5000.0 (1293 ms)
+Test 3: api.[2] 4999.99 (1569 ms)
+Test 4: api.userCanNotDepositToNonExistingAccount() (548 ms)
+Test 5: api.[4] 1.7976931348623157E308 (1576 ms)
+Test 6: api.[2] 0 (1604 ms)
+
+Thread ForkJoinPool-1-worker-8
+Test 1: ui.depositValidAmount() (30857 ms)
+Test 2: ui.errorWhenRecipientNameEmpty() (22789 ms)
+
+Thread ForkJoinPool-1-worker-9
+Test 1: ui.errorWhenDepositInvalidAmount() (36065 ms)
+
+Thread ForkJoinPool-1-worker-10
+Test 1: api.[6] (837 ms)
+Test 2: api.[7] HiHIpDFMkrLIGpFFUMpZYhYyTztHdYzagSjsUzAOszKhKBvsplVVwBtqkahHrSYeXUXVNNtADKcravPpSOfAcVqTtfQuBlRYnOhQtgumwyDsQzeVaxsfwUejLRoBJIGM afUKQRHjxQXyiPHaEUIYChnuiPpNbgEQyqkJRSxKQfEeLSFWBvdYkXSsBetjLWlEABeToTdenDMqegYNCZpktZqwVJdtHYCvJGNCRSeOutxFsvfDMdkgKiHMMwpxkih (631 ms)
+Test 3: api.[2] L (1308 ms)
+Test 4: api.[3] tree word name (1099 ms)
+Test 5: api.[4] name withnumbers4 (1269 ms)
+Test 6: api.[5] name withsymbols! (2009 ms)
+
+Thread ForkJoinPool-1-worker-11
+Test 1: api.userCanNotTransferMoneyFromNonExistingAccount() (2024 ms)
+Test 2: api.userCanNotTransferMoneyToNonExistingAccount() (2803 ms)
+Test 3: api.userCanTransferAllMoneyFromAccount() (4984 ms)
+Test 4: api.[1] -0.01 (4869 ms)
+Test 5: api.[4] 1.7976931348623157E308 (2893 ms)
+Test 6: api.[2] 0.0 (3379 ms)
+
+Thread ForkJoinPool-1-worker-13
+Test 1: ui.errorWhenRecipientAccountEmpty() (35624 ms)
+--------------------------------------------------------------------------
+Thread ForkJoinPool-1-worker-1  | Total Duration: 44607 ms
+Thread ForkJoinPool-1-worker-2  | Total Duration: 70364 ms
+Thread ForkJoinPool-1-worker-3  | Total Duration: 58806 ms
+Thread ForkJoinPool-1-worker-4  | Total Duration: 41635 ms
+Thread ForkJoinPool-1-worker-5  | Total Duration: 56768 ms
+Thread ForkJoinPool-1-worker-6  | Total Duration: 68471 ms
+Thread ForkJoinPool-1-worker-7  | Total Duration: 8301 ms
+Thread ForkJoinPool-1-worker-8  | Total Duration: 53646 ms
+Thread ForkJoinPool-1-worker-9  | Total Duration: 36065 ms
+Thread ForkJoinPool-1-worker-10 | Total Duration: 63553 ms
+Thread ForkJoinPool-1-worker-11 | Total Duration: 20952 ms
+Thread ForkJoinPool-1-worker-13 | Total Duration: 35624 ms
+------------------------------------------------------------------------------
+
+Non-parallel run time: 184940 ms or 03:11 min
+
+Parallel run time:
+time 70364 ms
+Mvn test time  106857 ms
+
+

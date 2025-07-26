@@ -25,7 +25,8 @@ public class TransactionsPage extends DashboardBase<TransactionsPage> {
         return transferModal;
     }
 
-    public List<TransactionBage> getTransactions (){
+    public List<TransactionBage> getTransactions () throws InterruptedException {
+        Thread.sleep(5000);
         return generateBaseElements(transactions, TransactionBage::new);
     }
 

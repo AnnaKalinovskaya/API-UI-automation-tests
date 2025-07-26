@@ -22,16 +22,11 @@ import java.util.stream.Stream;
 
 public class DepositTest extends BaseTest{
 
-    private static BankAccountModel bankAccount;
-
-    @BeforeAll
-    public static void prepareData(){
-        bankAccount = user.createBankAccount();
-    }
 
     @ParameterizedTest
     @MethodSource("validDepositAmount")
     public void userCanDepositValidAmount (double validAmount){
+        var bankAccount = user.createBankAccount();
         BigDecimal depositAmount = new BigDecimal(validAmount)
                 .setScale(2, RoundingMode.HALF_UP);
         //get initial balance
@@ -71,6 +66,7 @@ public class DepositTest extends BaseTest{
     @ParameterizedTest
     @MethodSource("invalidAmount")
     public void userCanNotDepositInvalidAmount(double invalidAmount){
+        var bankAccount = user.createBankAccount();
         BigDecimal depositAmount = BigDecimal.valueOf(invalidAmount)
                 .setScale(2, RoundingMode.HALF_UP);
         //get initial balance
@@ -117,6 +113,7 @@ public class DepositTest extends BaseTest{
 
     @Test
     public void depositToAccountConcurrently(){
+        var bankAccount = user.createBankAccount();
         //check initial account balance
         BigDecimal initialBalance = user.getAllBankAccounts()
                 .getAccount(bankAccount.getId()).getBalance();
