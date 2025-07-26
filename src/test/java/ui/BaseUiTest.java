@@ -3,11 +3,9 @@ import api.BaseTest;
 import api.config.Config;
 import com.codeborne.selenide.Configuration;
 import com.codeborne.selenide.Selenide;
-import testextensions.extentions.BrowserMatchExtension;
 import common.storage.SessionStorage;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.extension.ExtendWith;
 import ui.pages.UserDashboard;
 import api.specs.RequestSpecs;
 
